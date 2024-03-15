@@ -13,10 +13,10 @@ BEFORE TRYING ANYTHING ELSE, ENABLE THIS IN THE **RUNESCAPE** SETTINGS
 
 ![image](https://user-images.githubusercontent.com/62370532/208992085-e2c07494-d8bb-489e-b7f3-ed538175acbc.png)
 
-Whenever this doesn't fix your issue, please feel free to look in the [Issues](https://github.com/DapperMickie/odablock-sounds/issues) section of this github page to see if anyone else had this issue. If there is not an issue open for your specific problem, please open a new issue so we can track all the bugs/problems that you might find using this plugin. We will try to resolve all problems within a reasonable time.
+Whenever this does not resolve your issue, please feel free to look in the [Issues](https://github.com/DapperMickie/odablock-sounds/issues) section of this GitHub page to see if anyone else had this issue.
 ___
 
-## Customising your sounds
+## Customizing your sounds
 
 ### Warning
 
@@ -24,7 +24,7 @@ Because we have a system in place that automatically updates the sounds for this
 
 ### 1. Locate your `.runelite` folder
 
-On windows this is likely to be here: `C:\Users\<your username>\.runelite`
+On Windows this is likely to be here: `C:\Users\<your username>\.runelite`
 
 If you aren't sure, it's the same place that stores your `settings.properties`
 
