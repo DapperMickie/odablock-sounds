@@ -129,4 +129,4 @@ Because the OSRS team adds new player kill lines from time to time, we've chosen
 
 ### Known Issues
 
-- PulseAudio on linux can just refuse to accept the audio formats used despite claiming to accept them.
+PulseAudio on Linux can just refuse to accept the audio formats used despite claiming to accept them.
