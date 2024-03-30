@@ -354,6 +354,7 @@ public class OdablockPlugin extends Plugin
 		tobChestLight.onVarbitChanged(event);
 		collectionLog.onVarbitChanged(event);
 		achievementDiaries.onVarbitChanged(event);
+		killingPlayer.onVarbitChanged(event);
 	}
 
 	@Subscribe

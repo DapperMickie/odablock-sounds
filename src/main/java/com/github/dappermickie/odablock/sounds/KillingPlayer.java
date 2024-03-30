@@ -10,6 +10,7 @@ import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.Player;
 import net.runelite.api.events.ChatMessage;
+import net.runelite.api.events.VarbitChanged;
 import net.runelite.client.util.Text;
 
 import javax.inject.Inject;
@@ -39,7 +40,7 @@ public class KillingPlayer
 
 	private final String message = "Good shit ma brotha don't forget your key!";
 
-
+	private int lmsKills = 0;
 
 	public boolean onChatMessage(ChatMessage chatMessage)
 	{
@@ -54,15 +55,36 @@ public class KillingPlayer
 			{
 				if (pattern.matcher(standardized).matches())
 				{
-					if (config.showChatMessages())
-					{
-						client.addChatMessage(ChatMessageType.PUBLICCHAT, ODABLOCK, message, null);
-					}
-					soundEngine.playClip(Sound.PLAYER_KILLING_SOUNDS, executor);
+					playSound();
 					return true;
 				}
 			}
 		}
 		return false;
+	}
+
+	public void onVarbitChanged(VarbitChanged event)
+	{
+		final int id = event.getVarbitId();
+		final int val = event.getValue();
+		final int varpId = event.getVarpId();
+
+		if (id == 5315 && varpId == 1377 && val != lmsKills)
+		{
+			lmsKills = val;
+
+			if (lmsKills > 0) {
+				playSound();
+			}
+		}
+	}
+
+	private void playSound()
+	{
+		if (config.showChatMessages())
+		{
+			client.addChatMessage(ChatMessageType.PUBLICCHAT, ODABLOCK, message, null);
+		}
+		soundEngine.playClip(Sound.PLAYER_KILLING_SOUNDS, executor);
 	}
 }
