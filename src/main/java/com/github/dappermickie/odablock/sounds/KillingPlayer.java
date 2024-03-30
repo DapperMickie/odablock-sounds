@@ -55,9 +55,15 @@ public class KillingPlayer
 			{
 				if (pattern.matcher(standardized).matches())
 				{
-					playSound();
+					playSound(true);
 					return true;
 				}
+			}
+
+			if (standardized.equalsIgnoreCase(local.getName() + " has won!"))
+			{
+				playSound(false);
+				return true;
 			}
 		}
 		return false;
@@ -73,15 +79,16 @@ public class KillingPlayer
 		{
 			lmsKills = val;
 
-			if (lmsKills > 0) {
-				playSound();
+			if (lmsKills > 0)
+			{
+				playSound(true);
 			}
 		}
 	}
 
-	private void playSound()
+	private void playSound(boolean sendMessage)
 	{
-		if (config.showChatMessages())
+		if (config.showChatMessages() && sendMessage)
 		{
 			client.addChatMessage(ChatMessageType.PUBLICCHAT, ODABLOCK, message, null);
 		}
