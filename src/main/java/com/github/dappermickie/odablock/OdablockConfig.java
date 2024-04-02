@@ -379,6 +379,30 @@ public interface OdablockConfig extends Config
 		return true;
 	}
 
+	@ConfigItem(
+		keyName = "twitchNotification",
+		name = "Twitch Notification",
+		description = "Should odablock notify you whenever he goes live on twitch?",
+		warning = "This option will share your IP Address with twitch by making the request to see if odablock is live.",
+		position = 32
+	)
+	default boolean twitchNotification()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "kickNotification",
+		name = "Kick Notification",
+		description = "Should odablock notify you whenever he goes live on twitch?",
+		warning = "This option will share your IP Address with kick by making the request to see if odablock is live.",
+		position = 33
+	)
+	default boolean kickNotification()
+	{
+		return true;
+	}
+
 	@ConfigSection(
 		name = "Tombs of Amascut",
 		description = "All the configurations regarding Tombs of Amascut.",

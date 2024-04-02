@@ -85,7 +85,10 @@ public enum Sound
 	HAIRDRESSER_SOUND_3("Hairdresser_r3.wav"),
 
 	SNOWBALL_1("Snowball_r1.wav"),
-	SNOWBALL_2("Snowball_r2.wav");
+	SNOWBALL_2("Snowball_r2.wav"),
+
+	TWITCH_LIVE("TwitchLive.wav"),
+	KICK_LIVE("KickLive.wav");
 
 	private final String resourceName;
 

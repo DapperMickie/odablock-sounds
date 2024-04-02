@@ -18,6 +18,7 @@ import com.github.dappermickie.odablock.sounds.HairDresser;
 import com.github.dappermickie.odablock.sounds.KillingPlayer;
 import com.github.dappermickie.odablock.sounds.KillingRat;
 import com.github.dappermickie.odablock.sounds.LevelUp;
+import com.github.dappermickie.odablock.sounds.LiveNotification;
 import com.github.dappermickie.odablock.sounds.Pet;
 import com.github.dappermickie.odablock.sounds.PetDog;
 import com.github.dappermickie.odablock.sounds.PkChest;
@@ -202,6 +203,9 @@ public class OdablockPlugin extends Plugin
 
 	@Inject
 	private KillingPlayer killingPlayer;
+
+	@Inject
+	private LiveNotification liveNotification;
 
 	@Inject
 	@Named("developerMode")
@@ -439,6 +443,7 @@ public class OdablockPlugin extends Plugin
 		final Player local = client.getLocalPlayer();
 		int currentTick = client.getTickCount();
 
+		liveNotification.onGameTick(event);
 		redemptionProc.onTick(currentTick, local);
 		ddsSpec.onTick(currentTick, local);
 		agsSpec.onTick(currentTick, local);
@@ -501,7 +506,7 @@ public class OdablockPlugin extends Plugin
 	{
 		if (developerMode)
 		{
-			debugScripts.onScriptCallbackEvent(scriptCallbackEvent);
+			//debugScripts.onScriptCallbackEvent(scriptCallbackEvent);
 		}
 	}
 
