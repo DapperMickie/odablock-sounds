@@ -44,8 +44,7 @@ public class ReportPlayer
 
 		if (config.sendReport() && REPORT_SCREEN_GROUP_ID == groupId && option.equals(SEND_REPORT))
 		{
-			Sound sound = RandomSoundUtility.getRandomSound(Sound.REPORT_PLAYER_SOUNDS);
-			soundEngine.playClip(sound, executor);
+			soundEngine.playClip(Sound.REPORT_PLAYER_1, executor);
 		}
 	}
 }

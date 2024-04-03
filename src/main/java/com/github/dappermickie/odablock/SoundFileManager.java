@@ -1,6 +1,10 @@
 package com.github.dappermickie.odablock;
 
 import java.io.FileWriter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.RuneLite;
 import net.runelite.client.util.Text;
@@ -32,9 +36,11 @@ public abstract class SoundFileManager
 	private static final String DELETE_WARNING_FILENAME = "EXTRA_FILES_WILL_BE_DELETED_BUT_FOLDERS_WILL_REMAIN";
 	private static final String SOUNDVERSION_FILENAME = "SOUNDVERSION";
 	private static final File DELETE_WARNING_FILE = new File(DOWNLOAD_DIR, DELETE_WARNING_FILENAME);
-	private static final HttpUrl RAW_GITHUB = HttpUrl.parse("https://raw.githubusercontent.com/dappermickie/odablock-sounds/sounds");
+	private static final HttpUrl RAW_GITHUB = HttpUrl.parse("https://raw.githubusercontent.com/dappermickie/odablock-sounds/sounds-v2");
 
 	private static boolean isUpdating = false;
+
+	private static Map<String, String[]> soundDirectoryMap = new HashMap<>();
 
 	@SuppressWarnings("ResultOfMethodCallIgnored")
 	public static void ensureDownloadDirectoryExists()
@@ -52,10 +58,31 @@ public abstract class SoundFileManager
 		}
 	}
 
+	@SuppressWarnings("ResultOfMethodCallIgnored")
+	public static void ensureSoundDirectoryExists(File soundDirectory)
+	{
+		if (!soundDirectory.exists())
+		{
+			soundDirectory.mkdirs();
+		}
+		File customDirectory = new File(soundDirectory, "custom");
+		if (!customDirectory.exists())
+		{
+			customDirectory.mkdirs();
+		}
+		try
+		{
+			soundDirectory.createNewFile();
+		}
+		catch (IOException ignored)
+		{
+		}
+	}
+
 	public static void downloadAllMissingSounds(final OkHttpClient okHttpClient)
 	{
 		// Get set of existing files in our dir - existing sounds will be skipped, unexpected files (not dirs, some sounds depending on config) will be deleted
-		Set<String> filesPresent = getFilesPresent();
+
 
 		HttpUrl versionUrl = RAW_GITHUB.newBuilder().addPathSegment(SOUNDVERSION_FILENAME).build();
 		int latestVersion = -1;
@@ -98,7 +125,7 @@ public abstract class SoundFileManager
 		isUpdating = true;
 		writeLatestVersion(latestVersion);
 
-		for (String filename : filesPresent)
+		for (String filename : getFilesPresent(DOWNLOAD_DIR))
 		{
 			File toDelete = new File(DOWNLOAD_DIR, filename);
 			//noinspection ResultOfMethodCallIgnored
@@ -106,10 +133,31 @@ public abstract class SoundFileManager
 			log.warn("Odablock plugin deleted " + filename);
 		}
 
+		List<String> cleanedDirectories = new ArrayList<>();
+
 		// Download any sounds that are not yet present but desired
 		for (Sound sound : getDesiredSoundList())
 		{
+			String soundDirectory = sound.getDirectory();
 			String fileNameToDownload = sound.getResourceName();
+			File soundDirectoryFile = new File(DOWNLOAD_DIR, soundDirectory);
+
+			ensureSoundDirectoryExists(soundDirectoryFile);
+
+			if (!cleanedDirectories.contains(soundDirectory))
+			{
+				Set<String> filesPresent = getFilesPresent(soundDirectoryFile);
+
+				for (String filename : filesPresent)
+				{
+					File toDelete = new File(soundDirectoryFile, filename);
+					//noinspection ResultOfMethodCallIgnored
+					toDelete.delete();
+					log.warn("Odablock plugin deleted " + filename);
+				}
+
+				cleanedDirectories.add(soundDirectory);
+			}
 
 			if (RAW_GITHUB == null)
 			{
@@ -118,8 +166,8 @@ public abstract class SoundFileManager
 				isUpdating = false;
 				return;
 			}
-			HttpUrl soundUrl = RAW_GITHUB.newBuilder().addPathSegment(fileNameToDownload).build();
-			Path outputPath = Paths.get(DOWNLOAD_DIR.getPath(), fileNameToDownload);
+			HttpUrl soundUrl = RAW_GITHUB.newBuilder().addPathSegment(soundDirectory).addPathSegment(fileNameToDownload).build();
+			Path outputPath = Paths.get(soundDirectoryFile.getPath(), fileNameToDownload);
 			try (Response res = okHttpClient.newCall(new Request.Builder().url(soundUrl).build()).execute())
 			{
 				if (res.body() != null)
@@ -139,9 +187,9 @@ public abstract class SoundFileManager
 		isUpdating = false;
 	}
 
-	private static Set<String> getFilesPresent()
+	private static Set<String> getFilesPresent(File directory)
 	{
-		File[] downloadDirFiles = DOWNLOAD_DIR.listFiles();
+		File[] downloadDirFiles = directory.listFiles();
 		if (downloadDirFiles == null || downloadDirFiles.length == 0)
 		{
 			return new HashSet<>();
@@ -163,7 +211,30 @@ public abstract class SoundFileManager
 
 	public static InputStream getSoundStream(Sound sound) throws FileNotFoundException
 	{
-		return new FileInputStream(new File(DOWNLOAD_DIR, sound.getResourceName()));
+		if (!soundDirectoryMap.containsKey(sound.getDirectory()))
+		{
+			File soundDirectoryPath = Paths.get(DOWNLOAD_DIR.getPath(), sound.getDirectory()).toFile();
+			File customSoundDirectoryPath = Paths.get(soundDirectoryPath.getPath(), "custom").toFile();
+
+			File[] files = customSoundDirectoryPath.listFiles();
+			if (files == null || files.length == 0) {
+				files = soundDirectoryPath.listFiles();
+			}
+
+			if (files == null || files.length == 0) {
+				return null;
+			}
+
+			var soundFileArray = Arrays.stream(files)
+				.filter(file -> !file.isDirectory())
+				.map(File::getAbsolutePath)
+				.collect(Collectors.toSet())
+				.toArray(new String[0]);
+
+			soundDirectoryMap.put(sound.getDirectory(), soundFileArray);
+		}
+		String soundFile = RandomSoundUtility.getRandomSound(soundDirectoryMap.get(sound.getDirectory()));
+		return new FileInputStream(soundFile);
 	}
 
 	public static int getSoundVersion() throws IOException
