@@ -90,7 +90,7 @@ public class KillingRat extends TimedSoundBase
 		}
 
 		setLastPlayedTickTick(currentTick);
-		soundEngine.playClip(Sound.KILLING_RAT_OR_SCURRIUS_SOUNDS, executor);
+		soundEngine.playClip(Sound.KILLING_RAT_OR_SCURRIUS_1, executor);
 		return true;
 	}
 
@@ -130,7 +130,7 @@ public class KillingRat extends TimedSoundBase
 		}
 
 		setLastPlayedTickTick(currentTick);
-		soundEngine.playClip(Sound.KILLING_RAT_OR_SCURRIUS_SOUNDS, executor);
+		soundEngine.playClip(Sound.KILLING_RAT_OR_SCURRIUS_1, executor);
 	}
 
 

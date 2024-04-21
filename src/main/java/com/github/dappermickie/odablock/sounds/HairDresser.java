@@ -46,7 +46,7 @@ public class HairDresser
 			WorldPoint currentLocation = client.getLocalPlayer().getWorldLocation();
 			if (FALADOR_HAIRDRESSER.contains(currentLocation))
 			{
-				soundEngine.playClip(Sound.HAIRDRESSER_SOUNDS, executor);
+				soundEngine.playClip(Sound.HAIRDRESSER_SOUND_1, executor);
 			}
 			return;
 		}
