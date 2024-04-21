@@ -45,7 +45,7 @@ public class AcbSpec
 			if (soundId == SoundIds.ACB_SPEC.Id)
 			{
 				event.consume();
-				soundEngine.playClip(Sound.ACB_SPEC_SOUNDS, executor);
+				soundEngine.playClip(Sound.ACB_SPEC, executor);
 				if (config.showChatMessages())
 				{
 					client.addChatMessage(ChatMessageType.PUBLICCHAT, ODABLOCK, message, null);
@@ -65,7 +65,7 @@ public class AcbSpec
 			if (soundId == SoundIds.ACB_SPEC.Id)
 			{
 				event.consume();
-				soundEngine.playClip(Sound.ACB_SPEC_SOUNDS, executor);
+				soundEngine.playClip(Sound.ACB_SPEC, executor);
 				if (config.showChatMessages())
 				{
 					client.addChatMessage(ChatMessageType.PUBLICCHAT, ODABLOCK, message, null);
