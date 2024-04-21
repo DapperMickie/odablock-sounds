@@ -1,6 +1,7 @@
 package com.github.dappermickie.odablock;
 
 import com.github.dappermickie.odablock.livestreams.LivestreamManager;
+import com.github.dappermickie.odablock.notifications.NotificationManager;
 import com.github.dappermickie.odablock.sounds.AcbSpec;
 import com.github.dappermickie.odablock.sounds.AcceptTrade;
 import com.github.dappermickie.odablock.sounds.AchievementDiaries;
@@ -206,6 +207,12 @@ public class OdablockPlugin extends Plugin
 
 	@Inject
 	private LivestreamManager livestreamManager;
+
+	@Inject
+	private NotificationManager notificationManager;
+
+	@Inject
+	private ChatRightClickManager chatRightClickManager;
 
 	@Inject
 	@Named("developerMode")
@@ -450,6 +457,8 @@ public class OdablockPlugin extends Plugin
 		tobChestLight.onGameTick(event);
 		coxSounds.onGameTick(event);
 		livestreamManager.onGameTick(event);
+		notificationManager.onGameTick(event);
+		chatRightClickManager.onGameTick(event);
 
 		// Should always happen after all tick events
 		cleanupTicks(currentTick);

@@ -1,6 +1,8 @@
 package com.github.dappermickie.odablock.livestreams;
 
+import com.github.dappermickie.odablock.ChatRightClickManager;
 import com.github.dappermickie.odablock.OdablockConfig;
+import com.github.dappermickie.odablock.RightClickAction;
 import com.google.gson.Gson;
 import java.io.IOException;
 import javax.inject.Inject;
@@ -50,6 +52,9 @@ public class LivestreamManager
 	@Inject
 	private OdablockConfig config;
 
+	@Inject
+	private ChatRightClickManager chatRightClickManager;
+
 	public void onGameTick(GameTick gameTick)
 	{
 		if (!config.livestream())
@@ -57,7 +62,6 @@ public class LivestreamManager
 			return;
 		}
 
-		addMenuOptionToOpenBrowser();
 		sendLivestreamMessage(false);
 
 		int currentTick = client.getTickCount();
@@ -114,6 +118,8 @@ public class LivestreamManager
 		lastSentMessage = currentTick;
 
 		ChatMessageBuilder chatMessage = new ChatMessageBuilder();
+		String hex = Integer.toHexString(config.livestreamColor().getRGB()).substring(2);
+		String message;
 		if (livestream.getKick().isLive())
 		{
 			chatMessage
@@ -127,6 +133,9 @@ public class LivestreamManager
 				.append("! ")
 				.append(ChatColorType.HIGHLIGHT)
 				.append(livestream.getKick().getTitle());
+			message = chatMessage.build().replaceAll("colHIGHLIGHT", "col=" + hex);
+			RightClickAction rightClickAction = new RightClickAction("Open Kick Stream", "https://kick.com/odablock");
+			chatRightClickManager.putInMap(message, rightClickAction);
 		}
 		else if (livestream.getTwitch().isLive())
 		{
@@ -138,6 +147,9 @@ public class LivestreamManager
 				.append("! ")
 				.append(ChatColorType.HIGHLIGHT)
 				.append(livestream.getKick().getTitle());
+			message = chatMessage.build().replaceAll("colHIGHLIGHT", "col=" + hex);
+			RightClickAction rightClickAction = new RightClickAction("Open Twitch Stream", "https://twitch.tv/odablock");
+			chatRightClickManager.putInMap(message, rightClickAction);
 		}
 		else
 		{
@@ -145,67 +157,9 @@ public class LivestreamManager
 			return;
 		}
 
-		sendLivestreamChatMessage(chatMessage);
-	}
-
-	protected void addMenuOptionToOpenBrowser()
-	{
-		Widget chatWidget = client.getWidget(ComponentID.CHATBOX_MESSAGE_LINES);
-		if (chatWidget != null)
-		{
-			for (Widget w : chatWidget.getDynamicChildren())
-			{
-				String untaggedText = Text.removeTags(w.getText());
-				if (untaggedText.contains("Odablock is live on ") && untaggedText.toLowerCase().contains("twitch"))
-				{
-					clientThread.invokeLater(() -> {
-						w.setAction(1, "Open Twitch Livestream");
-						w.setOnOpListener((JavaScriptCallback) this::openTwitch);
-						w.setHasListener(true);
-						w.setNoClickThrough(true);
-						w.revalidate();
-					});
-				}
-				else if (untaggedText.contains("Odablock is live on ") && untaggedText.toLowerCase().contains("kick"))
-				{
-					clientThread.invokeLater(() -> {
-						w.setAction(1, "Open Kick Livestream");
-						w.setOnOpListener((JavaScriptCallback) this::openKick);
-						w.setHasListener(true);
-						w.setNoClickThrough(true);
-						w.revalidate();
-					});
-				}
-				else
-				{
-					clientThread.invokeLater(() -> {
-						w.setHasListener(false);
-						w.setNoClickThrough(false);
-						w.revalidate();
-					});
-				}
-			}
-		}
-	}
-
-	protected void sendLivestreamChatMessage(ChatMessageBuilder response)
-	{
-		String hex = Integer.toHexString(config.livestreamColor().getRGB()).substring(2);
 		chatMessageManager.queue(QueuedMessage.builder()
 			.type(ChatMessageType.GAMEMESSAGE)
-			.runeLiteFormattedMessage(response.build().replaceAll("colHIGHLIGHT", "col=" + hex))
+			.runeLiteFormattedMessage(message)
 			.build());
-	}
-
-	protected void openKick(ScriptEvent ev)
-	{
-		LinkBrowser.browse("https://kick.com/odablock");
-		log.info("Opened a link to Odablocks kick livestream!");
-	}
-
-	protected void openTwitch(ScriptEvent ev)
-	{
-		LinkBrowser.browse("https://twitch.tv/odablock");
-		log.info("Opened a link to Odablocks twitch livestream!");
 	}
 }
