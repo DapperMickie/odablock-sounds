@@ -88,7 +88,7 @@ public class SnowBalled
 			if (playerWp.distanceTo2D(projectileWP) <= 2)
 			{
 				lastSnowballTriggerTick = currentTick;
-				soundEngine.playClip(Sound.SNOWBALL_SOUNDS[random.nextInt(Sound.SNOWBALL_SOUNDS.length)], executor);
+				soundEngine.playClip(Sound.SNOWBALL_1, executor);
 				if (config.showChatMessages())
 				{
 					client.addChatMessage(ChatMessageType.PUBLICCHAT, ODABLOCK, player.getName() + " already kicked you!", null);

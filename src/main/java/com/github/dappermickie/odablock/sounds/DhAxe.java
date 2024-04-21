@@ -146,22 +146,22 @@ public class DhAxe extends TimedSoundBase
 		if (current43 == OdablockVarbitValues.COMBAT_STYLE_43_0.Value &&
 			current46 == OdablockVarbitValues.COMBAT_STYLE_46_1.Value)
 		{
-			sound = RandomSoundUtility.getRandomSound(Sound.DH_AXE_CHOP_SOUNDS);
+			sound = Sound.DH_AXE_CHOP;
 		}
 		else if (current43 == OdablockVarbitValues.COMBAT_STYLE_43_1.Value &&
 			current46 == OdablockVarbitValues.COMBAT_STYLE_46_2.Value)
 		{
-			sound = RandomSoundUtility.getRandomSound(Sound.DH_AXE_HACK_SOUNDS);
+			sound = Sound.DH_AXE_HACK;
 		}
 		else if (current43 == OdablockVarbitValues.COMBAT_STYLE_43_2.Value &&
 			current46 == OdablockVarbitValues.COMBAT_STYLE_46_2.Value)
 		{
-			sound = RandomSoundUtility.getRandomSound(Sound.DH_AXE_SMASH_SOUNDS);
+			sound = Sound.DH_AXE_SMASH;
 		}
 		else if (current43 == OdablockVarbitValues.COMBAT_STYLE_43_3.Value &&
 			current46 == OdablockVarbitValues.COMBAT_STYLE_46_3.Value)
 		{
-			sound = RandomSoundUtility.getRandomSound(Sound.DH_AXE_BLOCK_SOUNDS);
+			sound = Sound.DH_AXE_BLOCK;
 		}
 		return sound;
 	}

@@ -6,7 +6,7 @@ public class RandomSoundUtility
 {
 	private static Random random = new Random();
 
-	public static Sound getRandomSound(Sound[] sounds)
+	public static String getRandomSound(String[] sounds)
 	{
 		return sounds[random.nextInt(sounds.length)];
 	}
