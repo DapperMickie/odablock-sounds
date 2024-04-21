@@ -1,6 +1,5 @@
 package com.github.dappermickie.odablock;
 
-import java.awt.Color;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
@@ -483,48 +482,5 @@ public interface OdablockConfig extends Config
 	default boolean coxPurpleChest()
 	{
 		return true;
-	}
-
-	@ConfigSection(
-		name = "Livestream",
-		description = "All livestream configurations.",
-		position = 400
-	)
-	String LIVESTREAM_SECTION = "livestreamSection";
-
-	@ConfigItem(
-		keyName = "livestream",
-		name = "Livestream Notification",
-		description = "Should Odablock send a message whenever he is live?",
-		section = LIVESTREAM_SECTION,
-		position = 401
-	)
-	default boolean livestream()
-	{
-		return true;
-	}
-
-	@ConfigItem(
-		keyName = "livestreamInterval",
-		name = "Notification Interval",
-		description = "Set the interval of the notification message for livestreams in minutes.",
-		section = LIVESTREAM_SECTION,
-		position = 402
-	)
-	default int livestreamInterval()
-	{
-		return 30;
-	}
-
-	@ConfigItem(
-		keyName = "livestreamColor",
-		name = "Notification Color",
-		description = "Set the color of the notification message for livestreams.",
-		section = LIVESTREAM_SECTION,
-		position = 402
-	)
-	default Color livestreamColor()
-	{
-		return Color.RED;
 	}
 }

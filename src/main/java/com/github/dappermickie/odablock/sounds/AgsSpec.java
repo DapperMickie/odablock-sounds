@@ -50,7 +50,7 @@ public class AgsSpec extends TimedSoundBase
 					{
 						client.addChatMessage(ChatMessageType.PUBLICCHAT, ODABLOCK, message, null);
 					}
-					soundEngine.playClip(Sound.AGS_SPEC, executor);
+					soundEngine.playClip(Sound.AGS_SPEC_SOUNDS, executor);
 					setLastPlayedTickTick(currentTick);
 				}
 			}
