@@ -82,44 +82,21 @@ public abstract class SoundFileManager
 	public static void downloadAllMissingSounds(final OkHttpClient okHttpClient)
 	{
 		// Get set of existing files in our dir - existing sounds will be skipped, unexpected files (not dirs, some sounds depending on config) will be deleted
-
-
+		assert RAW_GITHUB != null;
 		HttpUrl versionUrl = RAW_GITHUB.newBuilder().addPathSegment(SOUNDVERSION_FILENAME).build();
-		int latestVersion = -1;
-		try (Response res = okHttpClient.newCall(new Request.Builder().url(versionUrl).build()).execute())
+		int latestVersion = getLatestVersion(okHttpClient, versionUrl);
+		if (latestVersion == -1)
 		{
-			if (res.body() != null)
-			{
-				latestVersion = Integer.parseInt(Text.standardize(res.body().string()));
-			}
-		}
-		catch (IOException e)
-		{
-			log.error("Odablock Plugin could not download sound version", e);
 			return;
 		}
 
-		int currentVersion = -1;
-		try
-		{
-			currentVersion = getSoundVersion();
-		}
-		catch (IOException e)
-		{
-			// No current version available
-			var soundVersionFile = new File(DOWNLOAD_DIR, SOUNDVERSION_FILENAME);
-			try
-			{
-				soundVersionFile.createNewFile();
-			}
-			catch (IOException e2)
-			{
-				log.error("Couldn't create soundversion file");
-			}
-		}
+		int currentVersion = getCurrentVersion();
 
 		if (latestVersion == currentVersion)
 		{
+			isUpdating = true;
+			downloadMissingSounds(okHttpClient);
+			isUpdating = false;
 			return;
 		}
 		isUpdating = true;
@@ -136,10 +113,9 @@ public abstract class SoundFileManager
 		List<String> cleanedDirectories = new ArrayList<>();
 
 		// Download any sounds that are not yet present but desired
-		for (Sound sound : getDesiredSoundList())
+		for (Sound sound : Sound.values())
 		{
 			String soundDirectory = sound.getDirectory();
-			String fileNameToDownload = sound.getResourceName();
 			File soundDirectoryFile = new File(DOWNLOAD_DIR, soundDirectory);
 
 			ensureSoundDirectoryExists(soundDirectoryFile);
@@ -159,32 +135,99 @@ public abstract class SoundFileManager
 				cleanedDirectories.add(soundDirectory);
 			}
 
-			if (RAW_GITHUB == null)
+			// End early if the sound couldn't be downloaded
+			if (hasNotDownloadedSound(sound, okHttpClient))
 			{
-				// Hush intellij, it's okay, the potential NPE can't hurt you now
-				log.error("Odablock Plugin could not download sounds due to an unexpected null RAW_GITHUB value");
-				isUpdating = false;
-				return;
-			}
-			HttpUrl soundUrl = RAW_GITHUB.newBuilder().addPathSegment(soundDirectory).addPathSegment(fileNameToDownload).build();
-			Path outputPath = Paths.get(soundDirectoryFile.getPath(), fileNameToDownload);
-			try (Response res = okHttpClient.newCall(new Request.Builder().url(soundUrl).build()).execute())
-			{
-				if (res.body() != null)
-				{
-					Files.copy(new BufferedInputStream(res.body().byteStream()), outputPath, StandardCopyOption.REPLACE_EXISTING);
-					log.warn("Odablock plugin downloaded " + fileNameToDownload);
-				}
-			}
-			catch (IOException e)
-			{
-				log.error("Odablock Plugin could not download sounds", e);
-				isUpdating = false;
 				return;
 			}
 		}
 
 		isUpdating = false;
+	}
+
+	private static int getCurrentVersion()
+	{
+		int currentVersion = -1;
+		try
+		{
+			currentVersion = getSoundVersion();
+		}
+		catch (IOException e)
+		{
+			// No current version available
+			var soundVersionFile = new File(DOWNLOAD_DIR, SOUNDVERSION_FILENAME);
+			try
+			{
+				//noinspection ResultOfMethodCallIgnored
+				soundVersionFile.createNewFile();
+			}
+			catch (IOException e2)
+			{
+				log.error("Couldn't create soundversion file");
+			}
+		}
+		return currentVersion;
+	}
+
+	private static int getLatestVersion(OkHttpClient okHttpClient, HttpUrl versionUrl)
+	{
+		int latestVersion = -1;
+		try (Response res = okHttpClient.newCall(new Request.Builder().url(versionUrl).build()).execute())
+		{
+			if (res.body() != null)
+			{
+				latestVersion = Integer.parseInt(Text.standardize(res.body().string()));
+			}
+		}
+		catch (IOException e)
+		{
+			log.error("Odablock Plugin could not download sound version", e);
+		}
+		return latestVersion;
+	}
+
+	private static boolean hasNotDownloadedSound(Sound sound, OkHttpClient okHttpClient)
+	{
+		String soundDirectory = sound.getDirectory();
+		String soundResourceName = sound.getResourceName();
+		File soundDirectoryFile = new File(DOWNLOAD_DIR.getPath(), sound.getDirectory());
+		assert RAW_GITHUB != null;
+		HttpUrl soundUrl = RAW_GITHUB.newBuilder().addPathSegment(soundDirectory).addPathSegment(soundResourceName).build();
+		Path outputPath = Paths.get(soundDirectoryFile.getPath(), soundResourceName);
+		ensureSoundDirectoryExists(soundDirectoryFile);
+		try (Response res = okHttpClient.newCall(new Request.Builder().url(soundUrl).build()).execute())
+		{
+			if (res.body() != null)
+			{
+				Files.copy(new BufferedInputStream(res.body().byteStream()), outputPath, StandardCopyOption.REPLACE_EXISTING);
+				log.warn("Odablock plugin downloaded " + sound.getResourceName());
+				return false;
+			}
+			return true;
+		}
+		catch (IOException e)
+		{
+			log.error("Odablock Plugin could not download sounds", e);
+			isUpdating = false;
+			return true;
+		}
+	}
+
+	private static void downloadMissingSounds(OkHttpClient okHttpClient)
+	{
+		for (Sound sound : Sound.values())
+		{
+			File soundFile = Paths.get(DOWNLOAD_DIR.getPath(), sound.getDirectory(), sound.getResourceName()).toFile();
+			if (soundFile.exists())
+			{
+				continue;
+			}
+			// Download sound and if a sound couldn't get downloaded, return early.
+			if (hasNotDownloadedSound(sound, okHttpClient))
+			{
+				return;
+			}
+		}
 	}
 
 	private static Set<String> getFilesPresent(File directory)
@@ -203,12 +246,6 @@ public abstract class SoundFileManager
 			.collect(Collectors.toSet());
 	}
 
-	private static Set<Sound> getDesiredSoundList()
-	{
-		return Arrays.stream(Sound.values())
-			.collect(Collectors.toSet());
-	}
-
 	public static InputStream getSoundStream(Sound sound) throws FileNotFoundException
 	{
 		if (!soundDirectoryMap.containsKey(sound.getDirectory()))
@@ -217,19 +254,19 @@ public abstract class SoundFileManager
 			File customSoundDirectoryPath = Paths.get(soundDirectoryPath.getPath(), "custom").toFile();
 
 			File[] files = customSoundDirectoryPath.listFiles();
-			if (files == null || files.length == 0) {
+			if (files == null || files.length == 0)
+			{
 				files = soundDirectoryPath.listFiles();
 			}
 
-			if (files == null || files.length == 0) {
+			if (files == null || files.length == 0)
+			{
 				return null;
 			}
 
 			var soundFileArray = Arrays.stream(files)
 				.filter(file -> !file.isDirectory())
-				.map(File::getAbsolutePath)
-				.collect(Collectors.toSet())
-				.toArray(new String[0]);
+				.map(File::getAbsolutePath).distinct().toArray(String[]::new);
 
 			soundDirectoryMap.put(sound.getDirectory(), soundFileArray);
 		}
