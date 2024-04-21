@@ -82,7 +82,7 @@ public class AchievementDiaries
 				{
 					client.addChatMessage(ChatMessageType.PUBLICCHAT, ODABLOCK, "Achievement diary: completed.", null);
 				}
-				soundEngine.playClip(Sound.ACHIEVEMENT_DIARY_SOUNDS, executor);
+				soundEngine.playClip(Sound.ACHIEVEMENT_DIARY, executor);
 			}
 		}
 	}
