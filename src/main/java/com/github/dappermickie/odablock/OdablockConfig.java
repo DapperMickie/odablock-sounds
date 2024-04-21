@@ -527,35 +527,4 @@ public interface OdablockConfig extends Config
 	{
 		return Color.RED;
 	}
-
-	@ConfigSection(
-		name = "Notifications",
-		description = "All notification configurations.",
-		position = 500
-	)
-	String NOTIFICATION_SECTION = "notificationSection";
-
-	@ConfigItem(
-		keyName = "notification",
-		name = "Odablock Notifications",
-		description = "Should Odablock send out notifications?",
-		section = NOTIFICATION_SECTION,
-		position = 501
-	)
-	default boolean notifications()
-	{
-		return true;
-	}
-
-	@ConfigItem(
-		keyName = "notificationColor",
-		name = "Notification Color",
-		description = "Set the color of the notification messages.",
-		section = NOTIFICATION_SECTION,
-		position = 502
-	)
-	default Color notificationColor()
-	{
-		return Color.RED;
-	}
 }
