@@ -5,23 +5,18 @@ import com.github.dappermickie.odablock.OdablockConfig;
 import com.github.dappermickie.odablock.RightClickAction;
 import com.google.gson.Gson;
 import java.io.IOException;
+import java.util.concurrent.ScheduledExecutorService;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
-import net.runelite.api.ScriptEvent;
 import net.runelite.api.events.GameTick;
-import net.runelite.api.widgets.ComponentID;
-import net.runelite.api.widgets.JavaScriptCallback;
-import net.runelite.api.widgets.Widget;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.chat.ChatColorType;
 import net.runelite.client.chat.ChatMessageBuilder;
 import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.chat.QueuedMessage;
-import net.runelite.client.util.LinkBrowser;
-import net.runelite.client.util.Text;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -55,6 +50,9 @@ public class LivestreamManager
 	@Inject
 	private ChatRightClickManager chatRightClickManager;
 
+	@Inject
+	private ScheduledExecutorService executor;
+
 	public void onGameTick(GameTick gameTick)
 	{
 		if (!config.livestream())
@@ -67,35 +65,44 @@ public class LivestreamManager
 		int currentTick = client.getTickCount();
 		if (lastChecked == -1 || currentTick - lastChecked > 100)
 		{
-			Request request = new Request.Builder()
-				.url("https://raw.githubusercontent.com/DapperMickie/odablock-sounds-notifier/main/livestream.json")
-				.build();
-			try (Response response = okHttpClient.newCall(request).execute())
-			{
-				if (!response.isSuccessful() || response.body() == null)
-				{
-					return;
-				}
-
-				String jsonResponse = response.body().string();
-				Livestream newLivestream = gson.fromJson(jsonResponse, Livestream.class);
-
-				if (livestream != null &&
-					newLivestream.getKick().isLive() == livestream.getKick().isLive() &&
-					newLivestream.getTwitch().isLive() == livestream.getTwitch().isLive())
-				{
-					lastChecked = currentTick;
-					return;
-				}
-
-				livestream = newLivestream;
-				sendLivestreamMessage(true);
-			}
-			catch (IOException ignored)
-			{
-			}
+			executor.submit(() -> {
+				sendRequest(currentTick);
+			});
 
 			lastChecked = currentTick;
+		}
+	}
+
+	private void sendRequest(final int currentTick)
+	{
+		Request request = new Request.Builder()
+			.url("https://raw.githubusercontent.com/DapperMickie/odablock-sounds-notifier/main/livestream.json")
+			.build();
+		try (Response response = okHttpClient.newCall(request).execute())
+		{
+			if (!response.isSuccessful() || response.body() == null)
+			{
+				return;
+			}
+
+			String jsonResponse = response.body().string();
+			Livestream newLivestream = gson.fromJson(jsonResponse, Livestream.class);
+
+			if (livestream != null &&
+				newLivestream.getKick().isLive() == livestream.getKick().isLive() &&
+				newLivestream.getTwitch().isLive() == livestream.getTwitch().isLive())
+			{
+				lastChecked = currentTick;
+				return;
+			}
+
+			livestream = newLivestream;
+			clientThread.invokeLater(() -> {
+				sendLivestreamMessage(true);
+			});
+		}
+		catch (IOException ignored)
+		{
 		}
 	}
 
