@@ -101,7 +101,7 @@ public class CoxSounds
 			}
 			else if (config.coxPurpleChest())
 			{
-				soundEngine.playClip(Sound.GETTING_PURPLE_1, executor);
+				soundEngine.playClip(Sound.PLAYER_KILLING_SOUNDS, executor);
 			}
 		}
 	}

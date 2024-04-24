@@ -41,6 +41,12 @@ public class SoundEngine
 		return false;
 	}
 
+	public void playClip(Sound[] sounds, Executor executor)
+	{
+		Sound sound = RandomSoundUtility.getRandomSound(sounds);
+		playClip(sound, executor);
+	}
+
 	public void playClip(Sound sound, Executor executor)
 	{
 		executor.execute(() -> playClip(sound));
@@ -72,7 +78,7 @@ public class SoundEngine
 			catch (LineUnavailableException e)
 			{
 				lastClipMTime = CLIP_MTIME_UNLOADED;
-				log.warn("Failed to get clip for Odablock sound " + sound, e);
+				log.warn("Failed to get clip for C Engineer sound " + sound, e);
 				return;
 			}
 

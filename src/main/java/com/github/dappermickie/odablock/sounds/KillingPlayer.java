@@ -92,6 +92,6 @@ public class KillingPlayer
 		{
 			client.addChatMessage(ChatMessageType.PUBLICCHAT, ODABLOCK, message, null);
 		}
-		soundEngine.playClip(Sound.KILLING_SOMEONE_1, executor);
+		soundEngine.playClip(Sound.PLAYER_KILLING_SOUNDS, executor);
 	}
 }
