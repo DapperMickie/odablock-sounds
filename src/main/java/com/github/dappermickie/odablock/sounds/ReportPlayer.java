@@ -32,8 +32,8 @@ public class ReportPlayer
 	@Inject
 	private ScheduledExecutorService executor;
 
-	private static final int REPORT_SCREEN_GROUP_ID = 553;
-	private static final String SEND_REPORT = "Send report";
+	private static final int REPORT_SCREEN_GROUP_ID = 875;
+	private static final String REPORT_FOR = "Report for";
 
 	public void onMenuOptionClicked(MenuOptionClicked menuOptionClicked)
 	{
@@ -42,7 +42,7 @@ public class ReportPlayer
 		String option = menuOptionClicked.getMenuOption();
 		MenuAction action = menuOptionClicked.getMenuAction();
 
-		if (config.sendReport() && REPORT_SCREEN_GROUP_ID == groupId && option.equals(SEND_REPORT))
+		if (config.sendReport() && REPORT_SCREEN_GROUP_ID == groupId && option.equals(REPORT_FOR))
 		{
 			soundEngine.playClip(Sound.REPORT_PLAYER_1, executor);
 		}
