@@ -5,7 +5,6 @@ import com.github.dappermickie.odablock.OdablockPlugin;
 import com.github.dappermickie.odablock.RandomSoundUtility;
 import com.github.dappermickie.odablock.Sound;
 import com.github.dappermickie.odablock.SoundEngine;
-import java.util.Random;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.MenuAction;
@@ -32,8 +31,8 @@ public class ReportPlayer
 	@Inject
 	private ScheduledExecutorService executor;
 
-	private static final int REPORT_SCREEN_GROUP_ID = 553;
-	private static final String SEND_REPORT = "Send report";
+	private static final int REPORT_SCREEN_GROUP_ID = 875;
+	private static final String REPORT_FOR = "Report for";
 
 	public void onMenuOptionClicked(MenuOptionClicked menuOptionClicked)
 	{
@@ -42,7 +41,7 @@ public class ReportPlayer
 		String option = menuOptionClicked.getMenuOption();
 		MenuAction action = menuOptionClicked.getMenuAction();
 
-		if (config.sendReport() && REPORT_SCREEN_GROUP_ID == groupId && option.equals(SEND_REPORT))
+		if (config.sendReport() && REPORT_SCREEN_GROUP_ID == groupId && option.equals(REPORT_FOR))
 		{
 			Sound sound = RandomSoundUtility.getRandomSound(Sound.REPORT_PLAYER_SOUNDS);
 			soundEngine.playClip(sound, executor);
