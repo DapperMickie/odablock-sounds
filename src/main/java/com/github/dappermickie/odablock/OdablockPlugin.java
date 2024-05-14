@@ -50,6 +50,7 @@ import net.runelite.api.Player;
 import net.runelite.api.events.ActorDeath;
 import net.runelite.api.events.AreaSoundEffectPlayed;
 import net.runelite.api.events.ChatMessage;
+import net.runelite.api.events.CommandExecuted;
 import net.runelite.api.events.GameObjectDespawned;
 import net.runelite.api.events.GameObjectSpawned;
 import net.runelite.api.events.GameStateChanged;
@@ -530,6 +531,12 @@ public class OdablockPlugin extends Plugin
 		{
 			debugScripts.onScriptCallbackEvent(scriptCallbackEvent);
 		}
+	}
+
+	@Subscribe
+	public void onCommandExecuted(CommandExecuted event)
+	{
+		emoteHandler.onCommandExecuted(event);
 	}
 
 	public static int TO_GROUP(int id)
