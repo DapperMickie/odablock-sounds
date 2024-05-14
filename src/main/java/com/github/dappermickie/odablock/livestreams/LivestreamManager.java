@@ -153,7 +153,7 @@ public class LivestreamManager
 				.append(ChatColorType.NORMAL)
 				.append("! ")
 				.append(ChatColorType.HIGHLIGHT)
-				.append(livestream.getKick().getTitle());
+				.append(livestream.getTwitch().getTitle());
 			message = chatMessage.build().replaceAll("colHIGHLIGHT", "col=" + hex);
 			RightClickAction rightClickAction = new RightClickAction("Open Twitch Stream", "https://twitch.tv/odablock");
 			chatRightClickManager.putInMap(message, rightClickAction);
