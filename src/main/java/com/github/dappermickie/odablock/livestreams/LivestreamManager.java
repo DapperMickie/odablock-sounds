@@ -130,10 +130,8 @@ public class LivestreamManager
 		if (livestream.getKick().isLive())
 		{
 			chatMessage
-				.append(ChatColorType.HIGHLIGHT)
-				.append("Odablock")
 				.append(ChatColorType.NORMAL)
-				.append(" is live on ")
+				.append("Odablock is live on ")
 				.append(ChatColorType.HIGHLIGHT)
 				.append("KICK")
 				.append(ChatColorType.NORMAL)
