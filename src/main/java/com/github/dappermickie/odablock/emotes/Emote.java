@@ -19,11 +19,11 @@ public enum Emote
 	KEK("kek", EmoteType.GIF),
 	KISS("kiss", EmoteType.PNG),
 	NOWAY("noway", EmoteType.PNG),
-	PFACE(":p", EmoteType.GIF),
+	PFACE(":p", EmoteType.GIF, new String[]{"pface"}),
 	RLY("rly", EmoteType.GIF),
-	SMILE(":)", EmoteType.GIF),
+	SMILE(":)", EmoteType.GIF, new String[]{"smile"}),
 	TUNE("tune", EmoteType.GIF),
-	WHAT("what", EmoteType.PNG),
+	ODAWHAT("odawhat", EmoteType.PNG),
 	WHENITREGISTERS("whenitregisters", EmoteType.GIF),
 	WINK("wink", EmoteType.PNG);
 
@@ -37,6 +37,12 @@ public enum Emote
 
 	private final String trigger;
 	private final EmoteType emoteType;
+	private final String[] altTriggers;
+
+	Emote(final String trigger, EmoteType emoteType)
+	{
+		this(trigger, emoteType, new String[]{});
+	}
 
 	static
 	{
@@ -45,6 +51,18 @@ public enum Emote
 		for (final Emote emoji : values())
 		{
 			builder.put(emoji.trigger, emoji);
+			if (!emoji.trigger.startsWith("oda") && !emoji.trigger.startsWith(":"))
+			{
+				builder.put("oda" + emoji.trigger, emoji);
+			}
+			for (final String altTrigger : emoji.altTriggers)
+			{
+				builder.put(altTrigger, emoji);
+				if (!altTrigger.startsWith("oda") && !altTrigger.startsWith(":"))
+				{
+					builder.put("oda" + altTrigger, emoji);
+				}
+			}
 		}
 
 		emojiMap = builder.build();

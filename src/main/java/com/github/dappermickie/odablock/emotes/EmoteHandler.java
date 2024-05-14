@@ -1,5 +1,6 @@
 package com.github.dappermickie.odablock.emotes;
 
+import static com.github.dappermickie.odablock.OdablockPlugin.ODABLOCK;
 import java.awt.image.BufferedImage;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
@@ -7,10 +8,14 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import joptsimple.internal.Strings;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.ChatMessageType;
+import net.runelite.api.Client;
 import net.runelite.api.MessageNode;
 import net.runelite.api.Player;
 import net.runelite.api.events.ChatMessage;
+import net.runelite.api.events.CommandExecuted;
 import net.runelite.api.events.OverheadTextChanged;
+import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.ChatIconManager;
 import net.runelite.client.util.Text;
 
@@ -22,6 +27,12 @@ public class EmoteHandler
 
 	@Inject
 	private ChatIconManager chatIconManager;
+
+	@Inject
+	private ClientThread clientThread;
+
+	@Inject
+	private Client client;
 
 	private int[] iconIds;
 
@@ -94,6 +105,25 @@ public class EmoteHandler
 		}
 
 		event.getActor().setOverheadText(updatedMessage);
+	}
+
+	public void onCommandExecuted(CommandExecuted event)
+	{
+		if (event.getCommand().startsWith("odaemote") || event.getCommand().startsWith("odablockemote"))
+		{
+			clientThread.invoke(this::sendOdaEmotes);
+		}
+	}
+
+	private void sendOdaEmotes()
+	{
+		client.addChatMessage(ChatMessageType.GAMEMESSAGE, ODABLOCK, "Odablock emote list:", null);
+		for (Emote emote : Emote.values())
+		{
+			final int emoteId = iconIds[emote.ordinal()];
+			final String emoteImage = "<img=" + chatIconManager.chatIconIndex(emoteId) + ">";
+			client.addChatMessage(ChatMessageType.GAMEMESSAGE, ODABLOCK, emote.name() + " : " + emoteImage, null);
+		}
 	}
 
 	@Nullable
