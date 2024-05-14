@@ -131,10 +131,8 @@ public class LivestreamManager
 		{
 			final String title = livestream.getKick().getTitle().split("\\|")[0].trim();
 			chatMessage
-				.append(ChatColorType.HIGHLIGHT)
-				.append("Odablock")
 				.append(ChatColorType.NORMAL)
-				.append(" is live on ")
+				.append("Odablock is live on ")
 				.append(ChatColorType.HIGHLIGHT)
 				.append("KICK")
 				.append(ChatColorType.NORMAL)
