@@ -49,12 +49,12 @@ public class ChatRightClickManager
 				{
 					RightClickAction rightClickAction = rightClickable.get(untaggedText);
 					clientThread.invokeLater(() -> {
-						w.setAction(1, rightClickAction.getAction());
+						w.setAction(5, rightClickAction.getAction());
 						w.setOnOpListener((JavaScriptCallback) (ScriptEvent ev) -> {
 							openLink(rightClickAction);
 						});
 						w.setHasListener(true);
-						w.setNoClickThrough(true);
+						w.setNoClickThrough(false);
 						w.revalidate();
 					});
 				}
