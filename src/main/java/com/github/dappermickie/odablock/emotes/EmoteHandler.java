@@ -1,5 +1,6 @@
 package com.github.dappermickie.odablock.emotes;
 
+import com.github.dappermickie.odablock.OdablockConfig;
 import static com.github.dappermickie.odablock.OdablockPlugin.ODABLOCK;
 import java.awt.image.BufferedImage;
 import java.util.regex.Pattern;
@@ -34,6 +35,9 @@ public class EmoteHandler
 	@Inject
 	private Client client;
 
+	@Inject
+	private OdablockConfig config;
+
 	private int[] iconIds;
 
 	public void loadEmotes()
@@ -56,6 +60,11 @@ public class EmoteHandler
 
 	public void onChatMessage(ChatMessage chatMessage)
 	{
+		if (!config.emotes())
+		{
+			return;
+		}
+
 		if (iconIds == null)
 		{
 			return;
@@ -91,6 +100,11 @@ public class EmoteHandler
 
 	public void onOverheadTextChanged(final OverheadTextChanged event)
 	{
+		if (!config.emotes())
+		{
+			return;
+		}
+
 		if (!(event.getActor() instanceof Player))
 		{
 			return;

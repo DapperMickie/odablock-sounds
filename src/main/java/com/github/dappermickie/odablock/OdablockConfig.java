@@ -380,6 +380,17 @@ public interface OdablockConfig extends Config
 		return true;
 	}
 
+	@ConfigItem(
+		keyName = "emotes",
+		name = "Emotes",
+		description = "Configures whether or not some of the text in game gets replaced with Odablock's emotes<br /> (type '::odaemotes' in chat to see a list).",
+		position = 32
+	)
+	default boolean emotes()
+	{
+		return true;
+	}
+
 	@ConfigSection(
 		name = "Tombs of Amascut",
 		description = "All the configurations regarding Tombs of Amascut.",
