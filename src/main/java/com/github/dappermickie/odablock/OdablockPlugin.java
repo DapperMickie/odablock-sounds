@@ -1,5 +1,6 @@
 package com.github.dappermickie.odablock;
 
+import com.github.dappermickie.odablock.emotes.EmoteHandler;
 import com.github.dappermickie.odablock.livestreams.LivestreamManager;
 import com.github.dappermickie.odablock.notifications.NotificationManager;
 import com.github.dappermickie.odablock.sounds.AcbSpec;
@@ -49,6 +50,7 @@ import net.runelite.api.Player;
 import net.runelite.api.events.ActorDeath;
 import net.runelite.api.events.AreaSoundEffectPlayed;
 import net.runelite.api.events.ChatMessage;
+import net.runelite.api.events.CommandExecuted;
 import net.runelite.api.events.GameObjectDespawned;
 import net.runelite.api.events.GameObjectSpawned;
 import net.runelite.api.events.GameStateChanged;
@@ -56,6 +58,7 @@ import net.runelite.api.events.GameTick;
 import net.runelite.api.events.InteractingChanged;
 import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.events.NpcDespawned;
+import net.runelite.api.events.OverheadTextChanged;
 import net.runelite.api.events.PlayerDespawned;
 import net.runelite.api.events.PlayerSpawned;
 import net.runelite.api.events.ProjectileMoved;
@@ -215,6 +218,9 @@ public class OdablockPlugin extends Plugin
 	private ChatRightClickManager chatRightClickManager;
 
 	@Inject
+	private EmoteHandler emoteHandler;
+
+	@Inject
 	@Named("developerMode")
 	private boolean developerMode;
 	// End of sound injections
@@ -227,6 +233,7 @@ public class OdablockPlugin extends Plugin
 		clientThread.invoke(this::setupOldMaps);
 		achievementDiaries.setLastLoginTick(-1);
 		prayerDown.setLastLoginTick(-1);
+		emoteHandler.loadEmotes();
 		executor.submit(() -> {
 			PlayerKillLineManager.Setup(okHttpClient);
 			SoundFileManager.ensureDownloadDirectoryExists();
@@ -303,6 +310,8 @@ public class OdablockPlugin extends Plugin
 	@Subscribe
 	public void onChatMessage(ChatMessage chatMessage)
 	{
+		emoteHandler.onChatMessage(chatMessage);
+
 		if (acceptTrade.onChatMessage(chatMessage))
 		{
 			return;
@@ -350,6 +359,11 @@ public class OdablockPlugin extends Plugin
 		}
 	}
 
+	@Subscribe
+	private void onOverheadTextChanged(OverheadTextChanged event)
+	{
+		emoteHandler.onOverheadTextChanged(event);
+	}
 
 	@Subscribe
 	public void onVarbitChanged(VarbitChanged event)
@@ -517,6 +531,12 @@ public class OdablockPlugin extends Plugin
 		{
 			debugScripts.onScriptCallbackEvent(scriptCallbackEvent);
 		}
+	}
+
+	@Subscribe
+	public void onCommandExecuted(CommandExecuted event)
+	{
+		emoteHandler.onCommandExecuted(event);
 	}
 
 	public static int TO_GROUP(int id)

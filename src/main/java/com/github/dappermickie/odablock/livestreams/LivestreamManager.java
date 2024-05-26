@@ -129,23 +129,23 @@ public class LivestreamManager
 		String message;
 		if (livestream.getKick().isLive())
 		{
+			final String title = livestream.getKick().getTitle().split("\\|")[0].trim();
 			chatMessage
-				.append(ChatColorType.HIGHLIGHT)
-				.append("Odablock")
 				.append(ChatColorType.NORMAL)
-				.append(" is live on ")
+				.append("Odablock is live on ")
 				.append(ChatColorType.HIGHLIGHT)
 				.append("KICK")
 				.append(ChatColorType.NORMAL)
 				.append("! ")
 				.append(ChatColorType.HIGHLIGHT)
-				.append(livestream.getKick().getTitle());
+				.append(title);
 			message = chatMessage.build().replaceAll("colHIGHLIGHT", "col=" + hex);
 			RightClickAction rightClickAction = new RightClickAction("Open Kick Stream", "https://kick.com/odablock");
 			chatRightClickManager.putInMap(message, rightClickAction);
 		}
 		else if (livestream.getTwitch().isLive())
 		{
+			final String title = livestream.getTwitch().getTitle().split("\\|")[0].trim();
 			chatMessage.append(ChatColorType.NORMAL)
 				.append("Odablock is live on ")
 				.append(ChatColorType.HIGHLIGHT)
@@ -153,7 +153,7 @@ public class LivestreamManager
 				.append(ChatColorType.NORMAL)
 				.append("! ")
 				.append(ChatColorType.HIGHLIGHT)
-				.append(livestream.getKick().getTitle());
+				.append(title);
 			message = chatMessage.build().replaceAll("colHIGHLIGHT", "col=" + hex);
 			RightClickAction rightClickAction = new RightClickAction("Open Twitch Stream", "https://twitch.tv/odablock");
 			chatRightClickManager.putInMap(message, rightClickAction);
