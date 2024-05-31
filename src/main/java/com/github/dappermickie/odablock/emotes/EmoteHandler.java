@@ -3,6 +3,9 @@ package com.github.dappermickie.odablock.emotes;
 import com.github.dappermickie.odablock.OdablockConfig;
 import static com.github.dappermickie.odablock.OdablockPlugin.ODABLOCK;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -136,14 +139,51 @@ public class EmoteHandler
 		{
 			final int emoteId = iconIds[emote.ordinal()];
 			final String emoteImage = "<img=" + chatIconManager.chatIconIndex(emoteId) + ">";
-			client.addChatMessage(ChatMessageType.GAMEMESSAGE, ODABLOCK, emote.name() + " : " + emoteImage, null);
+			StringBuilder chatMessageSb = new StringBuilder();
+			chatMessageSb.append(emote.getTrigger());
+			chatMessageSb.append(" : ");
+			chatMessageSb.append(emoteImage);
+			List<String> altTriggerOriginal = Arrays.asList(emote.getAltTriggers());
+			List<String> altTriggers = new ArrayList<>(altTriggerOriginal);
+			if (!emote.getTrigger().startsWith("oda") && !emote.getTrigger().startsWith(":"))
+			{
+				altTriggers.add("oda" + emote.getTrigger());
+			}
+			for (int i = 0; i < altTriggers.size(); i++)
+			{
+				if (i == 0)
+				{
+					chatMessageSb.append(" (alt: ");
+				}
+				else
+				{
+					chatMessageSb.append(", ");
+				}
+				String altTrigger = altTriggers.get(i);
+				chatMessageSb.append(altTrigger);
+				if (!altTrigger.startsWith("oda") && !altTrigger.startsWith(":"))
+				{
+					chatMessageSb.append(", oda");
+					chatMessageSb.append(altTrigger);
+				}
+				if (i == (altTriggers.size() - 1))
+				{
+					chatMessageSb.append(" )");
+				}
+			}
+			client.addChatMessage(ChatMessageType.GAMEMESSAGE, ODABLOCK, chatMessageSb.toString(), null);
 		}
+		client.addChatMessage(ChatMessageType.GAMEMESSAGE, ODABLOCK, "Some emotes have an alternative trigger that will get translated into an emote.", null);
+		client.addChatMessage(ChatMessageType.GAMEMESSAGE, ODABLOCK, "For example: both \"cap\" and \"odacap\" work.", null);
+		client.addChatMessage(ChatMessageType.GAMEMESSAGE, ODABLOCK, "To disable an emote, you can add it to the \"Emote Ignore List\" in the plugin settings.", null);
+		client.addChatMessage(ChatMessageType.GAMEMESSAGE, ODABLOCK, "Add the emote and the alternative triggers to completely disable an emote.", null);
 	}
 
 	@Nullable
 	String updateMessage(final String message)
 	{
 		final String[] messageWords = WHITESPACE_REGEXP.split(message);
+		final String[] ignoredEmotes = config.emoteIgnoreList().split(",");
 
 		boolean editedMessage = false;
 		for (int i = 0; i < messageWords.length; i++)
@@ -156,6 +196,21 @@ public class EmoteHandler
 			if (emote == null)
 			{
 				continue;
+			}
+
+			boolean shouldSkip = false;
+			for (String ignored : ignoredEmotes)
+			{
+				if (ignored.strip().equalsIgnoreCase(trigger))
+				{
+					shouldSkip = true;
+					break;
+				}
+			}
+
+			if (shouldSkip)
+			{
+				break;
 			}
 
 			final int emoteId = iconIds[emote.ordinal()];

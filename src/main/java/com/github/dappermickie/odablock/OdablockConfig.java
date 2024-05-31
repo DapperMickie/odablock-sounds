@@ -383,12 +383,23 @@ public interface OdablockConfig extends Config
 	@ConfigItem(
 		keyName = "emotes",
 		name = "Emotes",
-		description = "Configures whether or not some of the text in game gets replaced with Odablock's emotes<br /> (type '::odaemotes' in chat to see a list).",
+		description = "Configures whether or not some of the text in game gets replaced with Odablock's emotes.<br />type '::odaemotes' in chat to see a list of all available emotes.",
 		position = 32
 	)
 	default boolean emotes()
 	{
 		return true;
+	}
+
+	@ConfigItem(
+		keyName = "emoteIgnoreList",
+		name = "Emote Ignore List",
+		description = "A comma separated list of emotes to ignore for example: \":p, :)\".<br />type '::odaemotes' in chat to see a list of all available emotes.",
+		position = 33
+	)
+	default String emoteIgnoreList()
+	{
+		return "";
 	}
 
 	@ConfigSection(
