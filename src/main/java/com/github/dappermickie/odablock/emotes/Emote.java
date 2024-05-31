@@ -24,6 +24,7 @@ public enum Emote
 	SMILE(":)", EmoteType.GIF, new String[]{"smile"}),
 	TUNE("tune", EmoteType.GIF),
 	ODAWHAT("odawhat", EmoteType.PNG),
+	DAP("dap", EmoteType.PNG),
 	WHENITREGISTERS("whenitregisters", EmoteType.GIF),
 	WINK("wink", EmoteType.PNG);
 
