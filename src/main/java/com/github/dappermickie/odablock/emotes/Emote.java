@@ -25,6 +25,7 @@ public enum Emote
 	TUNE("tune", EmoteType.GIF),
 	ODAWHAT("odawhat", EmoteType.PNG),
 	DAP("dap", EmoteType.PNG),
+	CAP("cap", EmoteType.PNG),
 	WHENITREGISTERS("whenitregisters", EmoteType.GIF),
 	WINK("wink", EmoteType.PNG);
 
