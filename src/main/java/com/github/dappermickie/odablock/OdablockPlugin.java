@@ -21,6 +21,7 @@ import com.github.dappermickie.odablock.sounds.HairDresser;
 import com.github.dappermickie.odablock.sounds.KillingPlayer;
 import com.github.dappermickie.odablock.sounds.KillingRat;
 import com.github.dappermickie.odablock.sounds.LevelUp;
+import com.github.dappermickie.odablock.sounds.OdablockWarriors;
 import com.github.dappermickie.odablock.sounds.Pet;
 import com.github.dappermickie.odablock.sounds.PetDog;
 import com.github.dappermickie.odablock.sounds.PkChest;
@@ -209,6 +210,10 @@ public class OdablockPlugin extends Plugin
 	private KillingPlayer killingPlayer;
 
 	@Inject
+	private OdablockWarriors odablockWarriors;
+	// End of sound injections
+
+	@Inject
 	private LivestreamManager livestreamManager;
 
 	@Inject
@@ -223,7 +228,6 @@ public class OdablockPlugin extends Plugin
 	@Inject
 	@Named("developerMode")
 	private boolean developerMode;
-	// End of sound injections
 
 	public static final String ODABLOCK = "Odablock";
 
@@ -395,6 +399,7 @@ public class OdablockPlugin extends Plugin
 		reportPlayer.onMenuOptionClicked(menuOptionClicked);
 		declineTrade.onMenuOptionClicked(menuOptionClicked);
 		dismissRandomEvent.onMenuOptionClicked(menuOptionClicked);
+		odablockWarriors.onMenuOptionClicked(menuOptionClicked);
 	}
 
 	@Subscribe
@@ -407,6 +412,7 @@ public class OdablockPlugin extends Plugin
 
 		hairDresser.onWidgetLoaded(event);
 		pkChest.onWidgetLoaded(event);
+		odablockWarriors.onWidgetLoaded(event);
 	}
 
 	@Subscribe
@@ -537,6 +543,9 @@ public class OdablockPlugin extends Plugin
 	public void onCommandExecuted(CommandExecuted event)
 	{
 		emoteHandler.onCommandExecuted(event);
+		//if(event.getCommand().equals("loadwarrior")) {
+		//	odablockWarriors.onWidgetLoaded(null);
+		//}
 	}
 
 	public static int TO_GROUP(int id)
