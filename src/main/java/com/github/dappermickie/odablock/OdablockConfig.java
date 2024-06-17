@@ -380,6 +380,18 @@ public interface OdablockConfig extends Config
 		return true;
 	}
 
+	@ConfigItem(
+		keyName = "warriors",
+		name = "Odablock Warriors",
+		description = "Should the '7th Realm' in-game sound be replaced with the Odablock Warriors song?",
+		position = 30,
+		warning = "If you turn this off, you'll have to reload the client to be able to manually play '7th Realm' again."
+	)
+	default boolean warriors()
+	{
+		return true;
+	}
+
 	@ConfigSection(
 		name = "Tombs of Amascut",
 		description = "All the configurations regarding Tombs of Amascut.",

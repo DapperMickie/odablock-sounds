@@ -87,7 +87,9 @@ public enum Sound
 	HAIRDRESSER_SOUND_3("hairdresser", "Hairdresser_r3.wav"),
 
 	SNOWBALL_1("snowball", "Snowball_r1.wav"),
-	SNOWBALL_2("snowball", "Snowball_r2.wav");
+	SNOWBALL_2("snowball", "Snowball_r2.wav"),
+
+	WARRIOR("warriors", "odablock_warriors.wav");
 
 	private final String resourceName;
 	private final String directory;
