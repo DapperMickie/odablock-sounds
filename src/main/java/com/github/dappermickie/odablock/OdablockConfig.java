@@ -387,9 +387,6 @@ public interface OdablockConfig extends Config
 		position = 32
 	)
 	default boolean emotes()
-	{
-		return true;
-	}
 
 	@ConfigItem(
 		keyName = "emoteIgnoreList",
@@ -400,6 +397,19 @@ public interface OdablockConfig extends Config
 	default String emoteIgnoreList()
 	{
 		return "";
+	}
+  
+	@ConfigItem(
+		keyName = "warriors",
+		name = "Odablock Warriors",
+		description = "Should the '7th Realm' in-game sound be replaced with the Odablock Warriors song?",
+		position = 34,
+		warning = "If you turn this off, you'll have to reload the client to be able to manually play '7th Realm' again."
+	)
+	default boolean warriors()
+
+	{
+		return true;
 	}
 
 	@ConfigSection(
