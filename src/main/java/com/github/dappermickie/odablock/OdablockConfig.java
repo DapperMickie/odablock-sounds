@@ -387,6 +387,9 @@ public interface OdablockConfig extends Config
 		position = 32
 	)
 	default boolean emotes()
+	{
+		return true;
+	}
 
 	@ConfigItem(
 		keyName = "emoteIgnoreList",
@@ -398,7 +401,7 @@ public interface OdablockConfig extends Config
 	{
 		return "";
 	}
-  
+
 	@ConfigItem(
 		keyName = "warriors",
 		name = "Odablock Warriors",
