@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import java.awt.image.BufferedImage;
 import java.util.Map;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import net.runelite.client.util.ImageUtil;
 
 @AllArgsConstructor
@@ -24,6 +25,8 @@ public enum Emote
 	SMILE(":)", EmoteType.GIF, new String[]{"smile"}),
 	TUNE("tune", EmoteType.GIF),
 	ODAWHAT("odawhat", EmoteType.PNG),
+	DAP("dap", EmoteType.PNG),
+	CAP("cap", EmoteType.PNG),
 	WHENITREGISTERS("whenitregisters", EmoteType.GIF),
 	WINK("wink", EmoteType.PNG);
 
@@ -35,8 +38,10 @@ public enum Emote
 
 	private static final Map<String, Emote> emojiMap;
 
+	@Getter
 	private final String trigger;
 	private final EmoteType emoteType;
+	@Getter
 	private final String[] altTriggers;
 
 	Emote(final String trigger, EmoteType emoteType)

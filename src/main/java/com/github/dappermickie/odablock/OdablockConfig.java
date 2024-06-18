@@ -381,13 +381,33 @@ public interface OdablockConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "emotes",
+		name = "Emotes",
+		description = "Configures whether or not some of the text in game gets replaced with Odablock's emotes.<br />type '::odaemotes' in chat to see a list of all available emotes.",
+		position = 32
+	)
+	default boolean emotes()
+
+	@ConfigItem(
+		keyName = "emoteIgnoreList",
+		name = "Emote Ignore List",
+		description = "A comma separated list of emotes to ignore for example: \":p, :)\".<br />type '::odaemotes' in chat to see a list of all available emotes.",
+		position = 33
+	)
+	default String emoteIgnoreList()
+	{
+		return "";
+	}
+  
+	@ConfigItem(
 		keyName = "warriors",
 		name = "Odablock Warriors",
 		description = "Should the '7th Realm' in-game sound be replaced with the Odablock Warriors song?",
-		position = 30,
+		position = 34,
 		warning = "If you turn this off, you'll have to reload the client to be able to manually play '7th Realm' again."
 	)
 	default boolean warriors()
+
 	{
 		return true;
 	}
