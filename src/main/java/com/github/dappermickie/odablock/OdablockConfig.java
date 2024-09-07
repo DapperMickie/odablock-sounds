@@ -595,9 +595,9 @@ public interface OdablockConfig extends Config
 	}
 
 	@ConfigSection(
-    name = "Developer",
-    description = "Developer mode configurations.",
-    position = 600
+		name = "Developer",
+		description = "Developer mode configurations.",
+		position = 600
 	)
 	String DEVELOPER_SECTION = "developerSection";
 
