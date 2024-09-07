@@ -372,7 +372,7 @@ public class OdablockPlugin extends Plugin
 	@Subscribe
 	public void onVarbitChanged(VarbitChanged event)
 	{
-		if (developerMode)
+		if (developerMode && config.developerLogging())
 		{
 			debugScripts.onVarbitChanged(event);
 		}
@@ -389,7 +389,7 @@ public class OdablockPlugin extends Plugin
 	@Subscribe
 	public void onMenuOptionClicked(MenuOptionClicked menuOptionClicked)
 	{
-		if (developerMode)
+		if (developerMode && config.developerLogging())
 		{
 			debugScripts.onMenuOptionClicked(menuOptionClicked);
 		}
@@ -405,7 +405,7 @@ public class OdablockPlugin extends Plugin
 	@Subscribe
 	public void onWidgetLoaded(WidgetLoaded event)
 	{
-		if (developerMode)
+		if (developerMode && config.developerLogging())
 		{
 			debugScripts.onWidgetLoaded(event);
 		}
@@ -533,7 +533,7 @@ public class OdablockPlugin extends Plugin
 	@Subscribe
 	public void onScriptCallbackEvent(ScriptCallbackEvent scriptCallbackEvent)
 	{
-		if (developerMode)
+		if (developerMode && config.developerLogging())
 		{
 			debugScripts.onScriptCallbackEvent(scriptCallbackEvent);
 		}

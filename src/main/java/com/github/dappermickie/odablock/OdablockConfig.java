@@ -593,4 +593,23 @@ public interface OdablockConfig extends Config
 	{
 		return Color.RED;
 	}
+
+	@ConfigSection(
+    name = "Developer",
+    description = "Developer mode configurations.",
+    position = 600
+	)
+	String DEVELOPER_SECTION = "developerSection";
+
+	@ConfigItem(
+		keyName = "developerLogging",
+		name = "Developer Logging",
+		description = "Enable developer logging when developer mode is active.",
+		section = DEVELOPER_SECTION,
+		position = 601
+	)
+	default boolean developerLogging()
+	{
+		return false;
+	}
 }
