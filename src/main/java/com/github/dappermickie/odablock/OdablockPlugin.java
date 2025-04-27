@@ -47,6 +47,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
+import net.runelite.api.ItemID;
 import net.runelite.api.Player;
 import net.runelite.api.events.ActorDeath;
 import net.runelite.api.events.AreaSoundEffectPlayed;
@@ -69,6 +70,7 @@ import net.runelite.api.events.StatChanged;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.api.events.WallObjectSpawned;
 import net.runelite.api.events.WidgetLoaded;
+import net.runelite.api.widgets.Widget;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
@@ -413,6 +415,11 @@ public class OdablockPlugin extends Plugin
 		hairDresser.onWidgetLoaded(event);
 		pkChest.onWidgetLoaded(event);
 		odablockWarriors.onWidgetLoaded(event);
+
+		if (event.getGroupId() == 621)
+		{
+			setWidget();
+		}
 	}
 
 	@Subscribe
@@ -546,6 +553,89 @@ public class OdablockPlugin extends Plugin
 		//if(event.getCommand().equals("loadwarrior")) {
 		//	odablockWarriors.onWidgetLoaded(null);
 		//}
+	}
+
+	private void setWidget()
+	{
+		clientThread.invokeLater(this::lateSet);
+
+	}
+
+	private boolean lateSet()
+	{
+		// Left sidebar
+		Widget titleContainer = client.getWidget(40697868);
+		Widget[] titles = titleContainer.getDynamicChildren();
+		if (titles.length == 0)
+		{
+			return false;
+		}
+		Widget title = titles[0];
+		title.setText("Final Strand");
+		titleContainer.revalidate();
+
+		// Top of the inner container (right side)
+		Widget titleClogContainer = client.getWidget(40697875);
+		Widget[] titleClogContainerWidgets = titleClogContainer.getDynamicChildren();
+		titleClogContainerWidgets[0].setText("Final Strand");
+		titleClogContainerWidgets[1].setText("Obtained: <col=00ff00>9/11</col");
+		titleClogContainerWidgets[2].setText("Final Strand Kills: <col=00ff00>911</col>");
+		titleClogContainer.revalidate();
+
+		// Items
+		Widget itemsContainer = client.getWidget(40697892);
+
+		itemsContainer.deleteAllChildren();
+
+		createNewItem(itemsContainer, "Eclipse Atlatl", ItemID.ECLIPSE_ATLATL, 0);
+		createNewItem(itemsContainer, "Eclipse Atlatl", ItemID.ATLATL_DART, 1, 715);
+		createNewItem(itemsContainer, "Eclipse Atlatl", ItemID.REGEN_BRACELET, 2);
+		createNewItem(itemsContainer, "Eclipse Atlatl", ItemID.HUEYCOATL_HIDE_CHAPS, 3);
+		createNewItem(itemsContainer, "Eclipse Atlatl", ItemID.BERSERKER_NECKLACE, 4);
+		createNewItem(itemsContainer, "Eclipse Atlatl", ItemID.TZHAARKETOM, 5);
+		createNewItem(itemsContainer, "Eclipse Atlatl", ItemID.ROBIN_HOOD_HAT, 6);
+		createNewItem(itemsContainer, "Eclipse Atlatl", ItemID.STRENGTH_AMULET_T, 7);
+		createNewItem(itemsContainer, "Eclipse Atlatl", ItemID.BERSERKER_RING, 8);
+		createNewItem(itemsContainer, "Eclipse Atlatl", ItemID.VARROCK_ARMOUR_1, 9);
+		createNewItem(itemsContainer, "Eclipse Atlatl", ItemID.BLIGHTED_MANTA_RAY, 10, 10);
+		createNewItem(itemsContainer, "Eclipse Atlatl", ItemID.SARADOMIN_BREW4, 11, 2);
+		createNewItem(itemsContainer, "Eclipse Atlatl", ItemID.BLIGHTED_SUPER_RESTORE4, 12, 1);
+		createNewItem(itemsContainer, "Eclipse Atlatl", ItemID.BLIGHTED_SUPER_RESTORE3, 13, 1);
+		createNewItem(itemsContainer, "Eclipse Atlatl", ItemID.SUPER_STRENGTH3, 14, 1);
+		createNewItem(itemsContainer, "Eclipse Atlatl", ItemID.SUPER_ATTACK3, 15, 1);
+		createNewItem(itemsContainer, "Eclipse Atlatl", ItemID.FIRE_CAPE, 16, 1);
+		createNewItem(itemsContainer, "Eclipse Atlatl", ItemID.BOUNTY_CRATE_TIER_8, 17, 1);
+		createNewItem(itemsContainer, "Eclipse Atlatl", ItemID.HAIR, 18, 0);
+
+		itemsContainer.revalidate();
+
+		return true;
+	}
+
+	private void createNewItem(Widget container, String name, int id, int index)
+	{
+		createNewItem(container, name, id, index, 1);
+	}
+
+	private void createNewItem(Widget container, String name, int id, int index, int quantity)
+	{
+		int[] xValues = {0, 42, 84, 126, 168, 210};
+		int x = xValues[index % 6];
+		int y = (index / 6) * 36;
+
+		Widget eclipseAtlatl = container.createChild(5);
+		eclipseAtlatl.setItemId(id);
+		eclipseAtlatl.setName("<col=ff9040>" + name + "</col>");
+		eclipseAtlatl.setBorderType(1);
+		eclipseAtlatl.setModelZoom(746);
+		eclipseAtlatl.setItemQuantity(quantity);
+		eclipseAtlatl.setItemQuantityMode(2);
+		eclipseAtlatl.setOpacity(quantity > 0 ? 0 : 150);
+		eclipseAtlatl.setOriginalHeight(36);
+		eclipseAtlatl.setOriginalWidth(36);
+		eclipseAtlatl.setOriginalX(x);
+		eclipseAtlatl.setOriginalY(y);
+		eclipseAtlatl.revalidate();
 	}
 
 	public static int TO_GROUP(int id)
