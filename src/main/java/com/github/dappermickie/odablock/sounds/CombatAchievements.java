@@ -30,7 +30,7 @@ public class CombatAchievements
 	@Inject
 	private ScheduledExecutorService executor;
 
-	private static final Pattern COMBAT_TASK_REGEX = Pattern.compile("Congratulations, you've completed an? (?:\\w+) combat task:.*");
+	private static final Pattern COMBAT_TASK_REGEX = Pattern.compile("CA_ID:\\d+\\|Congratulations, you've completed an? \\w+ combat task:.*");
 
 	public boolean onChatMessage(ChatMessage chatMessage)
 	{
