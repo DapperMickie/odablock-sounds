@@ -246,7 +246,7 @@ public abstract class SoundFileManager
 			.collect(Collectors.toSet());
 	}
 
-	public static InputStream getSoundStream(Sound sound) throws FileNotFoundException
+	public static File getSoundStream(Sound sound) throws FileNotFoundException
 	{
 		if (!soundDirectoryMap.containsKey(sound.getDirectory()))
 		{
@@ -270,8 +270,7 @@ public abstract class SoundFileManager
 
 			soundDirectoryMap.put(sound.getDirectory(), soundFileArray);
 		}
-		String soundFile = RandomSoundUtility.getRandomSound(soundDirectoryMap.get(sound.getDirectory()));
-		return new FileInputStream(soundFile);
+		return Paths.get(RandomSoundUtility.getRandomSound(soundDirectoryMap.get(sound.getDirectory()))).toFile();
 	}
 
 	public static int getSoundVersion() throws IOException
