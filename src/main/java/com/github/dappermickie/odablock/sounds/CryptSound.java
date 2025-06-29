@@ -21,8 +21,14 @@ public class CryptSound {
     @Inject
     private ScheduledExecutorService executor;
 
+    @Inject
+    private OdablockConfig config;
+
 	public boolean onChatMessage(ChatMessage chatMessage)
 	{
+	    if (!config.cryptSound()) {
+	        return false;
+        }
         if (chatMessage.getMessage().equals(CRYPT_MESSAGE))
         {
             if (random.nextDouble() < 0.1)
