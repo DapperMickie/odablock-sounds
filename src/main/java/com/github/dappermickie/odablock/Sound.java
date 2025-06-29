@@ -89,6 +89,8 @@ public enum Sound
 	SNOWBALL_1("snowball", "Snowball_r1.wav"),
 	SNOWBALL_2("snowball", "Snowball_r2.wav"),
 
+
+	CRYPT("crypt", "Crypt.wav"),
 	WARRIOR("warriors", "odablock_warriors.wav");
 
 	private final String resourceName;
