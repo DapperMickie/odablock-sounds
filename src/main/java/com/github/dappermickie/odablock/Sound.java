@@ -92,6 +92,10 @@ public enum Sound
 	FREEZE("freeze", "Freeze.wav"),
 
 	CRYPT("crypt", "Crypt.wav"),
+
+	ZIKLOVER_IS_ON("zikloverison", "ZikloverIsOn.wav"),
+	ZIKLOVER_IS_NOT_ON("zikloverisoff", "ZikloverIsNotOn.wav"),
+
 	WARRIOR("warriors", "odablock_warriors.wav");
 
 	private final String resourceName;

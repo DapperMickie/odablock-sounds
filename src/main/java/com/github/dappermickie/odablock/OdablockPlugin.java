@@ -18,6 +18,7 @@ import com.github.dappermickie.odablock.sounds.DhAxe;
 import com.github.dappermickie.odablock.sounds.DismissRandomEvent;
 import com.github.dappermickie.odablock.sounds.EnteringBankPin;
 import com.github.dappermickie.odablock.sounds.FreezeSound;
+import com.github.dappermickie.odablock.sounds.FriendListSound;
 import com.github.dappermickie.odablock.sounds.GiveBone;
 import com.github.dappermickie.odablock.sounds.HairDresser;
 import com.github.dappermickie.odablock.sounds.KillingPlayer;
@@ -219,6 +220,9 @@ public class OdablockPlugin extends Plugin
 
 	@Inject
 	private CryptSound cryptSound;
+
+	@Inject
+	private FriendListSound friendListSound;
 	// End of sound injections
 
 	@Inject
@@ -416,6 +420,7 @@ public class OdablockPlugin extends Plugin
 		declineTrade.onMenuOptionClicked(menuOptionClicked);
 		dismissRandomEvent.onMenuOptionClicked(menuOptionClicked);
 		odablockWarriors.onMenuOptionClicked(menuOptionClicked);
+		friendListSound.onMenuOptionClicked(menuOptionClicked);
 	}
 
 	@Subscribe
