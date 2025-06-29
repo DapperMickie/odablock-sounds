@@ -93,6 +93,8 @@ public enum Sound
 
 	CRYPT("crypt", "Crypt.wav"),
 
+	SERYNA_SOUND("seryna", "Seryna.wav"),
+
 	ZIKLOVER_IS_ON("zikloverison", "ZikloverIsOn.wav"),
 	ZIKLOVER_IS_NOT_ON("zikloverisoff", "ZikloverIsNotOn.wav"),
 

@@ -31,8 +31,15 @@ public class FriendListSound {
     @Inject
     private Client client;
 
+    @Inject
+	private OdablockConfig config;
+
 	public void onMenuOptionClicked(MenuOptionClicked menuOptionClicked)
 	{
+		if (!config.friendListSound()) {
+			return;
+		}
+
 		if (random.nextDouble() > 0.1) {
 			return;
 		}
