@@ -93,6 +93,8 @@ public enum Sound
 
 	CRYPT("crypt", "Crypt.wav"),
 
+	WELCOME_SCREEN_SOUND("welcomescreen", "WelcomeScreen.wav"),
+
 	SERYNA_SOUND("seryna", "Seryna.wav"),
 
 	ZIKLOVER_IS_ON("zikloverison", "ZikloverIsOn.wav"),

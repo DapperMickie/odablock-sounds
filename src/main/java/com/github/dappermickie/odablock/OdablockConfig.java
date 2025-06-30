@@ -463,6 +463,17 @@ public interface OdablockConfig extends Config
 		return true;
 	}
 
+	@ConfigItem(
+		keyName = "welcomeScreen",
+		name = "Welcome Screen",
+		description = "Do you want to play the '' sound whenever you login and the welcome screen pops up?",
+		position = 39
+	)
+	default boolean welcomeScreen()
+	{
+		return true;
+	}
+
 	@ConfigSection(
 		name = "Tombs of Amascut",
 		description = "All the configurations regarding Tombs of Amascut.",
