@@ -1,7 +1,5 @@
 package com.github.dappermickie.odablock;
 
-import com.google.errorprone.annotations.Var;
-
 public enum OdablockVarbitValues
 {
 
