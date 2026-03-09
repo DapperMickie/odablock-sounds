@@ -20,15 +20,8 @@ public class FreezeSound {
 	@Inject
 	private ScheduledExecutorService executor;
 
-	@Inject
-	private OdablockConfig config;
-
 	public boolean onChatMessage(ChatMessage chatMessage)
 	{
-		if (!config.freezeSound()) {
-			return false;
-		}
-
         if (chatMessage.getMessage().equals(FROZEN_MESSAGE))
         {
             soundEngine.playClip(Sound.FREEZE, executor);
