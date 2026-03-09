@@ -10,7 +10,6 @@ import com.github.dappermickie.odablock.sounds.AgsSpec;
 import com.github.dappermickie.odablock.sounds.CollectionLog;
 import com.github.dappermickie.odablock.sounds.CombatAchievements;
 import com.github.dappermickie.odablock.sounds.CoxSounds;
-import com.github.dappermickie.odablock.sounds.CryptSound;
 import com.github.dappermickie.odablock.sounds.DdsSpec;
 import com.github.dappermickie.odablock.sounds.Death;
 import com.github.dappermickie.odablock.sounds.DeclineTrade;
@@ -212,9 +211,6 @@ public class OdablockPlugin extends Plugin
 
 	@Inject
 	private OdablockWarriors odablockWarriors;
-
-	@Inject
-	private CryptSound cryptSound;
 	// End of sound injections
 
 	@Inject
@@ -362,10 +358,6 @@ public class OdablockPlugin extends Plugin
 			return;
 		}
 		else if (coxSounds.onChatMessage(chatMessage))
-		{
-			return;
-		}
-		else if (cryptSound.onChatMessage(chatMessage))
 		{
 			return;
 		}
