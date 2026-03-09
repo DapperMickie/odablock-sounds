@@ -33,7 +33,6 @@ import com.github.dappermickie.odablock.sounds.QuestCompleted;
 import com.github.dappermickie.odablock.sounds.RedemptionProc;
 import com.github.dappermickie.odablock.sounds.ReportPlayer;
 import com.github.dappermickie.odablock.sounds.RubyBoltProc;
-import com.github.dappermickie.odablock.sounds.SerynaSound;
 import com.github.dappermickie.odablock.sounds.SnowBalled;
 import com.github.dappermickie.odablock.sounds.ToaChestLight;
 import com.github.dappermickie.odablock.sounds.ToaChestOpens;
@@ -224,9 +223,6 @@ public class OdablockPlugin extends Plugin
 
 	@Inject
 	private FriendListSound friendListSound;
-
-	@Inject
-	private SerynaSound serynaSound;
 	// End of sound injections
 
 	@Inject
@@ -483,7 +479,6 @@ public class OdablockPlugin extends Plugin
 	public void onInteractingChanged(InteractingChanged event)
 	{
 		killingRat.onInteractingChanged(event);
-		serynaSound.onInteractingChanged(event);
 	}
 
 	@Subscribe
