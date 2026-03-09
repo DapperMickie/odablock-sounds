@@ -17,7 +17,6 @@ import com.github.dappermickie.odablock.sounds.DeclineTrade;
 import com.github.dappermickie.odablock.sounds.DhAxe;
 import com.github.dappermickie.odablock.sounds.DismissRandomEvent;
 import com.github.dappermickie.odablock.sounds.EnteringBankPin;
-import com.github.dappermickie.odablock.sounds.FreezeSound;
 import com.github.dappermickie.odablock.sounds.GiveBone;
 import com.github.dappermickie.odablock.sounds.HairDresser;
 import com.github.dappermickie.odablock.sounds.KillingPlayer;
@@ -215,9 +214,6 @@ public class OdablockPlugin extends Plugin
 	private OdablockWarriors odablockWarriors;
 
 	@Inject
-	private FreezeSound freezeSound;
-
-	@Inject
 	private CryptSound cryptSound;
 	// End of sound injections
 
@@ -366,10 +362,6 @@ public class OdablockPlugin extends Plugin
 			return;
 		}
 		else if (coxSounds.onChatMessage(chatMessage))
-		{
-			return;
-		}
-		else if (freezeSound.onChatMessage(chatMessage))
 		{
 			return;
 		}
