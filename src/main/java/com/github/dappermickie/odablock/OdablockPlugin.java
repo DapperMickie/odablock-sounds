@@ -40,7 +40,6 @@ import com.github.dappermickie.odablock.sounds.ToaChestOpens;
 import com.github.dappermickie.odablock.sounds.TobChestLight;
 import com.github.dappermickie.odablock.sounds.TurnOnRun;
 import com.github.dappermickie.odablock.sounds.Vengeance;
-import com.github.dappermickie.odablock.sounds.WelcomeScreenSound;
 import com.github.dappermickie.odablock.sounds.ZebakRoar;
 import com.google.inject.Provides;
 import com.google.inject.name.Named;
@@ -228,9 +227,6 @@ public class OdablockPlugin extends Plugin
 
 	@Inject
 	private SerynaSound serynaSound;
-
-	@Inject
-	private WelcomeScreenSound welcomeScreen;
 	// End of sound injections
 
 	@Inject
@@ -314,7 +310,6 @@ public class OdablockPlugin extends Plugin
 				final int currentTick = client.getTickCount();
 				achievementDiaries.setLastLoginTick(currentTick);
 				prayerDown.setLastLoginTick(currentTick);
-				welcomeScreen.onLogin();
 				break;
 		}
 	}
