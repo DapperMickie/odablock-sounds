@@ -5,8 +5,8 @@ import lombok.Getter;
 public class Livestream
 {
 	@Getter
-	private LivestreamEntry twitch;
+	private boolean live;
 
 	@Getter
-	private LivestreamEntry kick;
+	private String title;
 }

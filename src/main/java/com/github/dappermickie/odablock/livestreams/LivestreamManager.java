@@ -5,6 +5,7 @@ import com.github.dappermickie.odablock.OdablockConfig;
 import com.github.dappermickie.odablock.RightClickAction;
 import com.google.gson.Gson;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -76,7 +77,7 @@ public class LivestreamManager
 	private void sendRequest(final int currentTick)
 	{
 		Request request = new Request.Builder()
-			.url("https://raw.githubusercontent.com/DapperMickie/odablock-sounds-notifier/main/livestream.json")
+			.url("https://live.odablock.cc/")
 			.build();
 		try (Response response = okHttpClient.newCall(request).execute())
 		{
@@ -88,9 +89,14 @@ public class LivestreamManager
 			String jsonResponse = response.body().string();
 			Livestream newLivestream = gson.fromJson(jsonResponse, Livestream.class);
 
+			if (newLivestream == null)
+			{
+				return;
+			}
+
 			if (livestream != null &&
-				newLivestream.getKick().isLive() == livestream.getKick().isLive() &&
-				newLivestream.getTwitch().isLive() == livestream.getTwitch().isLive())
+				newLivestream.isLive() == livestream.isLive() &&
+				Objects.equals(newLivestream.getTitle(), livestream.getTitle()))
 			{
 				lastChecked = currentTick;
 				return;
@@ -117,7 +123,7 @@ public class LivestreamManager
 		}
 
 		// Only send if oda is live
-		if (livestream == null || (!livestream.getTwitch().isLive() && !livestream.getKick().isLive()))
+		if (livestream == null || !livestream.isLive())
 		{
 			return;
 		}
@@ -126,43 +132,21 @@ public class LivestreamManager
 
 		ChatMessageBuilder chatMessage = new ChatMessageBuilder();
 		String hex = Integer.toHexString(config.livestreamColor().getRGB()).substring(2);
-		String message;
-		if (livestream.getKick().isLive())
+		final String title = livestream.getTitle() == null ? "" : livestream.getTitle().trim();
+		chatMessage
+			.append(ChatColorType.NORMAL)
+			.append("Odablock is live! ");
+
+		if (!title.isEmpty())
 		{
-			final String title = livestream.getKick().getTitle().split("\\|")[0].trim();
 			chatMessage
-				.append(ChatColorType.NORMAL)
-				.append("Odablock is live on ")
-				.append(ChatColorType.HIGHLIGHT)
-				.append("KICK")
-				.append(ChatColorType.NORMAL)
-				.append("! ")
 				.append(ChatColorType.HIGHLIGHT)
 				.append(title);
-			message = chatMessage.build().replaceAll("colHIGHLIGHT", "col=" + hex);
-			RightClickAction rightClickAction = new RightClickAction("Open Kick Stream", "https://kick.com/odablock");
-			chatRightClickManager.putInMap(message, rightClickAction);
 		}
-		else if (livestream.getTwitch().isLive())
-		{
-			final String title = livestream.getTwitch().getTitle().split("\\|")[0].trim();
-			chatMessage.append(ChatColorType.NORMAL)
-				.append("Odablock is live on ")
-				.append(ChatColorType.HIGHLIGHT)
-				.append("TWITCH")
-				.append(ChatColorType.NORMAL)
-				.append("! ")
-				.append(ChatColorType.HIGHLIGHT)
-				.append(title);
-			message = chatMessage.build().replaceAll("colHIGHLIGHT", "col=" + hex);
-			RightClickAction rightClickAction = new RightClickAction("Open Twitch Stream", "https://twitch.tv/odablock");
-			chatRightClickManager.putInMap(message, rightClickAction);
-		}
-		else
-		{
-			// return if not live on either kick or twitch
-			return;
-		}
+
+		String message = chatMessage.build().replaceAll("colHIGHLIGHT", "col=" + hex);
+		RightClickAction rightClickAction = new RightClickAction("Open Livestream", "https://live.odablock.cc/");
+		chatRightClickManager.putInMap(message, rightClickAction);
 
 		chatMessageManager.queue(QueuedMessage.builder()
 			.type(ChatMessageType.GAMEMESSAGE)
