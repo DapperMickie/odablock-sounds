@@ -145,7 +145,7 @@ public class LivestreamManager
 		}
 
 		String message = chatMessage.build().replaceAll("colHIGHLIGHT", "col=" + hex);
-		RightClickAction rightClickAction = new RightClickAction("Open Livestream", "https://live.odablock.cc/");
+		RightClickAction rightClickAction = new RightClickAction("Open Livestream", "https://kick.com/odablock");
 		chatRightClickManager.putInMap(message, rightClickAction);
 
 		chatMessageManager.queue(QueuedMessage.builder()
