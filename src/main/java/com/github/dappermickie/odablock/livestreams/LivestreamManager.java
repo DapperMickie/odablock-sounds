@@ -3,6 +3,7 @@ package com.github.dappermickie.odablock.livestreams;
 import com.github.dappermickie.odablock.ChatRightClickManager;
 import com.github.dappermickie.odablock.OdablockConfig;
 import com.github.dappermickie.odablock.RightClickAction;
+import com.github.dappermickie.odablock.sounds.LivestreamLiveSound;
 import com.google.gson.Gson;
 import java.io.IOException;
 import java.util.Objects;
@@ -54,6 +55,9 @@ public class LivestreamManager
 	@Inject
 	private ScheduledExecutorService executor;
 
+	@Inject
+	private LivestreamLiveSound livestreamLiveSound;
+
 	public void onGameTick(GameTick gameTick)
 	{
 		if (!config.livestream())
@@ -61,10 +65,11 @@ public class LivestreamManager
 			return;
 		}
 
+		handleTickReset();
 		sendLivestreamMessage(false);
 
 		int currentTick = client.getTickCount();
-		if (lastChecked == -1 || currentTick - lastChecked > 100)
+		if (lastChecked == -1 || currentTick < lastChecked || currentTick - lastChecked > 100)
 		{
 			executor.submit(() -> {
 				sendRequest(currentTick);
@@ -72,6 +77,14 @@ public class LivestreamManager
 
 			lastChecked = currentTick;
 		}
+	}
+
+	public void resetStateForWorldHopOrLogin()
+	{
+		// Reset poll/message timing so we immediately refresh after state transitions.
+		// Keep the last livestream snapshot so hop/login doesn't count as a live transition.
+		lastChecked = -1;
+		lastSentMessage = -1;
 	}
 
 	private void sendRequest(final int currentTick)
@@ -83,6 +96,7 @@ public class LivestreamManager
 		{
 			if (!response.isSuccessful() || response.body() == null)
 			{
+				log.warn("Livestream poll failed. status={}, hasBody={}", response.code(), response.body() != null);
 				return;
 			}
 
@@ -91,6 +105,7 @@ public class LivestreamManager
 
 			if (newLivestream == null)
 			{
+				log.warn("Livestream poll returned null payload.");
 				return;
 			}
 
@@ -98,17 +113,32 @@ public class LivestreamManager
 				newLivestream.isLive() == livestream.isLive() &&
 				Objects.equals(newLivestream.getTitle(), livestream.getTitle()))
 			{
+				log.info("Livestream poll succeeded. No state change (live={}, title={}).", newLivestream.isLive(), newLivestream.getTitle());
 				lastChecked = currentTick;
 				return;
 			}
 
+			final boolean wasLive = livestream != null && livestream.isLive();
+			final boolean isLive = newLivestream.isLive();
+			final boolean becameLive = livestream != null && !wasLive && isLive;
+			log.info("Livestream state updated: wasLive={}, isLive={}, title={}", wasLive, isLive, newLivestream.getTitle());
+
 			livestream = newLivestream;
 			clientThread.invokeLater(() -> {
 				sendLivestreamMessage(true);
+				if (becameLive)
+				{
+					livestreamLiveSound.playSound();
+				}
 			});
 		}
-		catch (IOException ignored)
+		catch (IOException e)
 		{
+			log.warn("Livestream poll request failed.", e);
+		}
+		catch (Exception e)
+		{
+			log.warn("Livestream poll processing failed.", e);
 		}
 	}
 
@@ -117,7 +147,10 @@ public class LivestreamManager
 		final int currentTick = client.getTickCount();
 
 		// Only send once every x minutes, unless we force send (in case he goes live)
-		if (!force && lastSentMessage != -1 && currentTick - lastSentMessage < config.livestreamInterval() * 100)
+		if (!force &&
+			lastSentMessage != -1 &&
+			currentTick >= lastSentMessage &&
+			currentTick - lastSentMessage < config.livestreamInterval() * 100)
 		{
 			return;
 		}
@@ -152,5 +185,18 @@ public class LivestreamManager
 			.type(ChatMessageType.GAMEMESSAGE)
 			.runeLiteFormattedMessage(message)
 			.build());
+	}
+
+	private void handleTickReset()
+	{
+		final int currentTick = client.getTickCount();
+		if (lastChecked != -1 && currentTick < lastChecked)
+		{
+			lastChecked = -1;
+		}
+		if (lastSentMessage != -1 && currentTick < lastSentMessage)
+		{
+			lastSentMessage = -1;
+		}
 	}
 }

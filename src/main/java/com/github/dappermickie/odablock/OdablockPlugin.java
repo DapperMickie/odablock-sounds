@@ -285,6 +285,7 @@ public class OdablockPlugin extends Plugin
 				// set to -1 here in-case of race condition with varbits changing before this handler is called
 				// when game state becomes LOGGED_IN
 				//soundEngine.playClip(Sound.CLIENT_DISCONNECTS, executor);
+				livestreamManager.resetStateForWorldHopOrLogin();
 
 				achievementDiaries.setLastLoginTick(-1);
 				prayerDown.setLastLoginTick(-1);
