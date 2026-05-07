@@ -10,7 +10,6 @@ import java.util.Objects;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
 import net.runelite.api.events.GameTick;
@@ -23,7 +22,6 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-@Slf4j
 @Singleton
 public class LivestreamManager
 {
@@ -96,7 +94,6 @@ public class LivestreamManager
 		{
 			if (!response.isSuccessful() || response.body() == null)
 			{
-				log.warn("Livestream poll failed. status={}, hasBody={}", response.code(), response.body() != null);
 				return;
 			}
 
@@ -105,7 +102,6 @@ public class LivestreamManager
 
 			if (newLivestream == null)
 			{
-				log.warn("Livestream poll returned null payload.");
 				return;
 			}
 
@@ -113,7 +109,6 @@ public class LivestreamManager
 				newLivestream.isLive() == livestream.isLive() &&
 				Objects.equals(newLivestream.getTitle(), livestream.getTitle()))
 			{
-				log.info("Livestream poll succeeded. No state change (live={}, title={}).", newLivestream.isLive(), newLivestream.getTitle());
 				lastChecked = currentTick;
 				return;
 			}
@@ -121,7 +116,6 @@ public class LivestreamManager
 			final boolean wasLive = livestream != null && livestream.isLive();
 			final boolean isLive = newLivestream.isLive();
 			final boolean becameLive = livestream != null && !wasLive && isLive;
-			log.info("Livestream state updated: wasLive={}, isLive={}, title={}", wasLive, isLive, newLivestream.getTitle());
 
 			livestream = newLivestream;
 			clientThread.invokeLater(() -> {
@@ -134,11 +128,9 @@ public class LivestreamManager
 		}
 		catch (IOException e)
 		{
-			log.warn("Livestream poll request failed.", e);
 		}
 		catch (Exception e)
 		{
-			log.warn("Livestream poll processing failed.", e);
 		}
 	}
 
