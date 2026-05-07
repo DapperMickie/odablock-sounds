@@ -17,6 +17,6 @@ public class LivestreamLiveSound
 
 	public void playSound()
 	{
-		soundEngine.playClip(Sound.Gamon, executor);
+		soundEngine.playClip(Sound.GAMON_GO_LIVE, executor);
 	}
 }
