@@ -56,6 +56,11 @@ public class OdablockWarriors
 
 	public void onMenuOptionClicked(MenuOptionClicked event)
 	{
+		if (!config.warriors())
+		{
+			return;
+		}
+
 		if (warriorWidget == null)
 		{
 			return;

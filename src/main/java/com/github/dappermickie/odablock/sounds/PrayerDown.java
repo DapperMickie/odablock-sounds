@@ -47,7 +47,7 @@ public class PrayerDown
 
 	public void onGameTick(GameTick event)
 	{
-		if (config.prayerMessage() && checkLowPrayer() && client.getTickCount() - lastLoginTick > 2 && lastLoginTick != -1)
+		if (canReplacePrayerDownSound() && checkLowPrayer())
 		{
 			soundEngine.playClip(Sound.SMITED_NO_PRAYER, executor);
 		}
@@ -82,17 +82,24 @@ public class PrayerDown
 
 	public void onSoundEffectPlayed(SoundEffectPlayed event)
 	{
-		int soundId = event.getSoundId();
-
-		if (config.prayerMessage())
+		if (event.getSoundId() == SoundIds.PRAYER_DOWN.Id && canReplacePrayerDownSound())
 		{
-			//if(!config.ownPlayerOnly() || (config.ownPlayerOnly() && local == event.getSource())) {
-			if (soundId == SoundIds.PRAYER_DOWN.Id)
-			{
-				event.consume();
-				return;
-			}
-			//}
+			event.consume();
 		}
+	}
+
+	private boolean canReplacePrayerDownSound()
+	{
+		if (!config.prayerMessage())
+		{
+			return false;
+		}
+
+		if (lastLoginTick == -1 || client.getTickCount() - lastLoginTick <= 2)
+		{
+			return false;
+		}
+
+		return !redemptionProc.HasRedemptionProcced();
 	}
 }
