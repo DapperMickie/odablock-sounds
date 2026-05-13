@@ -88,7 +88,7 @@ public class LivestreamManager
 	private void sendRequest(final int currentTick)
 	{
 		Request request = new Request.Builder()
-			.url("https://live.odablock.cc/")
+			.url("https://raw.githubusercontent.com/LogicalSoIutions/odablock-sounds-live/refs/heads/main/livestream.json")
 			.build();
 		try (Response response = okHttpClient.newCall(request).execute())
 		{
