@@ -2,9 +2,9 @@ package com.github.dappermickie.odablock;
 
 import java.io.FileWriter;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.RuneLite;
 import net.runelite.client.util.Text;
@@ -41,7 +41,7 @@ public abstract class SoundFileManager
 
 	private static boolean isUpdating = false;
 
-	private static final Map<String, String[]> soundDirectoryMap = new HashMap<>();
+	private static final Map<String, String[]> soundDirectoryMap = new ConcurrentHashMap<>();
 
 	@SuppressWarnings("ResultOfMethodCallIgnored")
 	public static void ensureDownloadDirectoryExists()
@@ -317,16 +317,21 @@ public abstract class SoundFileManager
 
 	private static String[] getOrLoadSoundFiles(String directory, boolean refreshCache)
 	{
+		if (directory == null)
+		{
+			return new String[0];
+		}
+
 		if (refreshCache)
 		{
 			soundDirectoryMap.remove(directory);
 		}
 
-		if (soundDirectoryMap.containsKey(directory))
-		{
-			return soundDirectoryMap.get(directory);
-		}
+		return soundDirectoryMap.computeIfAbsent(directory, SoundFileManager::loadSoundFilesFromDisk);
+	}
 
+	private static String[] loadSoundFilesFromDisk(String directory)
+	{
 		File soundDirectoryPath = Paths.get(DOWNLOAD_DIR.getPath(), directory).toFile();
 		File customSoundDirectoryPath = Paths.get(soundDirectoryPath.getPath(), "custom").toFile();
 		File[] files = customSoundDirectoryPath.listFiles();
@@ -343,7 +348,6 @@ public abstract class SoundFileManager
 				.distinct()
 				.toArray(String[]::new);
 
-		soundDirectoryMap.put(directory, soundFileArray);
 		return soundFileArray;
 	}
 

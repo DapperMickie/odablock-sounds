@@ -129,24 +129,25 @@ public class SoundOverrideService
 
 	public ImportResult importOverridesFromJson(final String json) throws JsonSyntaxException
 	{
-		if (json == null || json.trim().isEmpty())
-		{
-			throw new JsonSyntaxException("Override JSON is empty.");
-		}
+		Map<String, List<String>> incoming = parseOverrideJson(json);
+		return applyImportedOverrides(incoming, false);
+	}
 
-		Map<String, List<String>> incoming = GSON.fromJson(json, RAW_OVERRIDES_TYPE);
-		if (incoming == null)
-		{
-			throw new JsonSyntaxException("Override JSON did not parse to an object.");
-		}
+	public ImportResult replaceAllOverridesFromJson(final String json) throws JsonSyntaxException
+	{
+		Map<String, List<String>> incoming = parseOverrideJson(json);
+		return applyImportedOverrides(incoming, true);
+	}
 
+	private ImportResult applyImportedOverrides(final Map<String, List<String>> incoming, final boolean replaceAll)
+	{
 		Map<String, SoundOverrideAction> knownActions = new LinkedHashMap<>();
 		for (SoundOverrideAction action : SoundOverrideAction.values())
 		{
 			knownActions.put(action.getKey(), action);
 		}
 
-		Map<String, LinkedHashSet<String>> currentPools = loadOverridePools();
+		Map<String, LinkedHashSet<String>> currentPools = replaceAll ? new LinkedHashMap<>() : loadOverridePools();
 		int importedActions = 0;
 		int skippedEntries = 0;
 		int skippedActions = 0;
@@ -192,10 +193,19 @@ public class SoundOverrideService
 		return new ImportResult(importedActions, skippedActions, skippedEntries);
 	}
 
-	public ImportResult replaceAllOverridesFromJson(final String json) throws JsonSyntaxException
+	private Map<String, List<String>> parseOverrideJson(final String json) throws JsonSyntaxException
 	{
-		clearAllOverrides();
-		return importOverridesFromJson(json);
+		if (json == null || json.trim().isEmpty())
+		{
+			throw new JsonSyntaxException("Override JSON is empty.");
+		}
+
+		Map<String, List<String>> incoming = GSON.fromJson(json, RAW_OVERRIDES_TYPE);
+		if (incoming == null)
+		{
+			throw new JsonSyntaxException("Override JSON did not parse to an object.");
+		}
+		return incoming;
 	}
 
 	public static final class ImportResult

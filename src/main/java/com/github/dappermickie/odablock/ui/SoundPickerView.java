@@ -101,7 +101,7 @@ class SoundPickerView extends JPanel
 		else
 		{
 			selectedKeys.addAll(existingPool);
-			hasUserEditedSelection = true;
+			hasUserEditedSelection = false;
 		}
 
 		availableOptions = soundOverrideService.getAllSoundOptions(action, true);
@@ -309,10 +309,11 @@ class SoundPickerView extends JPanel
 
 	private void persistSelections()
 	{
-		if (currentAction == null)
+		if (currentAction == null || !hasUserEditedSelection)
 		{
 			return;
 		}
 		soundOverrideService.setOverrideFileNames(currentAction, new ArrayList<>(selectedKeys));
+		hasUserEditedSelection = false;
 	}
 }
