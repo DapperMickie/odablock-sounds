@@ -25,6 +25,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -40,7 +41,7 @@ public abstract class SoundFileManager
 
 	private static boolean isUpdating = false;
 
-	private static Map<String, String[]> soundDirectoryMap = new HashMap<>();
+	private static final Map<String, String[]> soundDirectoryMap = new HashMap<>();
 
 	@SuppressWarnings("ResultOfMethodCallIgnored")
 	public static void ensureDownloadDirectoryExists()
@@ -248,29 +249,102 @@ public abstract class SoundFileManager
 
 	public static File getSoundStream(Sound sound) throws FileNotFoundException
 	{
-		if (!soundDirectoryMap.containsKey(sound.getDirectory()))
+		String[] soundFileArray = getOrLoadSoundFiles(sound.getDirectory(), false);
+		if (soundFileArray.length == 0)
 		{
-			File soundDirectoryPath = Paths.get(DOWNLOAD_DIR.getPath(), sound.getDirectory()).toFile();
-			File customSoundDirectoryPath = Paths.get(soundDirectoryPath.getPath(), "custom").toFile();
-
-			File[] files = customSoundDirectoryPath.listFiles();
-			if (files == null || files.length == 0)
-			{
-				files = soundDirectoryPath.listFiles();
-			}
-
-			if (files == null || files.length == 0)
-			{
-				return null;
-			}
-
-			var soundFileArray = Arrays.stream(files)
-				.filter(file -> !file.isDirectory())
-				.map(File::getAbsolutePath).distinct().toArray(String[]::new);
-
-			soundDirectoryMap.put(sound.getDirectory(), soundFileArray);
+			return null;
 		}
-		return Paths.get(RandomSoundUtility.getRandomSound(soundDirectoryMap.get(sound.getDirectory()))).toFile();
+		return Paths.get(RandomSoundUtility.getRandomSound(soundFileArray)).toFile();
+	}
+
+	public static List<File> listCandidateSoundFiles(Sound sound)
+	{
+		return listCandidateSoundFiles(sound, false);
+	}
+
+	public static List<File> listCandidateSoundFiles(Sound sound, boolean refreshCache)
+	{
+		String[] soundFileArray = getOrLoadSoundFiles(sound.getDirectory(), refreshCache);
+		if (soundFileArray.length == 0)
+		{
+			return Collections.emptyList();
+		}
+
+		return Arrays.stream(soundFileArray)
+			.map(Paths::get)
+			.map(Path::toFile)
+			.collect(Collectors.toList());
+	}
+
+	public static void clearSoundDirectoryCache(Sound sound)
+	{
+		soundDirectoryMap.remove(sound.getDirectory());
+	}
+
+	public static void clearAllSoundDirectoryCaches()
+	{
+		soundDirectoryMap.clear();
+	}
+
+	public static List<File> listFilesInDirectory(String directory, boolean refreshCache)
+	{
+		String[] soundFileArray = getOrLoadSoundFiles(directory, refreshCache);
+		if (soundFileArray.length == 0)
+		{
+			return Collections.emptyList();
+		}
+		return Arrays.stream(soundFileArray)
+			.map(Paths::get)
+			.map(Path::toFile)
+			.collect(Collectors.toList());
+	}
+
+	public static File lookupFile(String directory, String fileName)
+	{
+		if (directory == null || fileName == null)
+		{
+			return null;
+		}
+		for (File file : listFilesInDirectory(directory, false))
+		{
+			if (fileName.equals(file.getName()))
+			{
+				return file;
+			}
+		}
+		return null;
+	}
+
+	private static String[] getOrLoadSoundFiles(String directory, boolean refreshCache)
+	{
+		if (refreshCache)
+		{
+			soundDirectoryMap.remove(directory);
+		}
+
+		if (soundDirectoryMap.containsKey(directory))
+		{
+			return soundDirectoryMap.get(directory);
+		}
+
+		File soundDirectoryPath = Paths.get(DOWNLOAD_DIR.getPath(), directory).toFile();
+		File customSoundDirectoryPath = Paths.get(soundDirectoryPath.getPath(), "custom").toFile();
+		File[] files = customSoundDirectoryPath.listFiles();
+		if (files == null || files.length == 0)
+		{
+			files = soundDirectoryPath.listFiles();
+		}
+
+		String[] soundFileArray = files == null
+			? new String[0]
+			: Arrays.stream(files)
+				.filter(file -> !file.isDirectory())
+				.map(File::getAbsolutePath)
+				.distinct()
+				.toArray(String[]::new);
+
+		soundDirectoryMap.put(directory, soundFileArray);
+		return soundFileArray;
 	}
 
 	public static int getSoundVersion() throws IOException

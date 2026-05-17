@@ -4,6 +4,7 @@ import com.github.dappermickie.odablock.OdablockConfig;
 import com.github.dappermickie.odablock.Sound;
 import com.github.dappermickie.odablock.SoundEngine;
 import com.github.dappermickie.odablock.SoundIds;
+import com.github.dappermickie.odablock.overrides.SoundOverrideAction;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.Player;
@@ -40,7 +41,7 @@ public class RubyBoltProc
 			if (soundId == SoundIds.RUBY_BOLT_PROC.Id)
 			{
 				event.consume();
-				soundEngine.playClip(Sound.RUBY_PROC, executor);
+				soundEngine.playClip(Sound.RUBY_PROC, SoundOverrideAction.RUBY_BOLT_PROC, executor);
 				return;
 			}
 		}

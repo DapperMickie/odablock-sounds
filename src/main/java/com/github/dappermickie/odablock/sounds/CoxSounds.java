@@ -4,6 +4,7 @@ import com.github.dappermickie.odablock.OdablockConfig;
 import com.github.dappermickie.odablock.RandomSoundUtility;
 import com.github.dappermickie.odablock.Sound;
 import com.github.dappermickie.odablock.SoundEngine;
+import com.github.dappermickie.odablock.overrides.SoundOverrideAction;
 import java.util.Random;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.regex.Matcher;
@@ -96,12 +97,12 @@ public class CoxSounds
 			{
 				if (config.coxWhiteChest())
 				{
-					soundEngine.playClip(Sound.WHITE_LIGHT_AFTER_RAID, executor);
+					soundEngine.playClip(Sound.WHITE_LIGHT_AFTER_RAID, SoundOverrideAction.COX_WHITE_CHEST, executor);
 				}
 			}
 			else if (config.coxPurpleChest())
 			{
-				soundEngine.playClip(Sound.GETTING_PURPLE_1, executor);
+				soundEngine.playClip(Sound.GETTING_PURPLE_1, SoundOverrideAction.COX_PURPLE_CHEST, executor);
 			}
 		}
 	}

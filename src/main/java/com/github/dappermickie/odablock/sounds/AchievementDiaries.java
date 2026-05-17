@@ -5,6 +5,7 @@ import static com.github.dappermickie.odablock.OdablockPlugin.ODABLOCK;
 import com.github.dappermickie.odablock.RandomSoundUtility;
 import com.github.dappermickie.odablock.Sound;
 import com.github.dappermickie.odablock.SoundEngine;
+import com.github.dappermickie.odablock.overrides.SoundOverrideAction;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -82,7 +83,7 @@ public class AchievementDiaries
 				{
 					client.addChatMessage(ChatMessageType.PUBLICCHAT, ODABLOCK, "Achievement diary: completed.", null);
 				}
-				soundEngine.playClip(Sound.ACHIEVEMENT_DIARY, executor);
+				soundEngine.playClip(Sound.ACHIEVEMENT_DIARY, SoundOverrideAction.ACHIEVEMENT_DIARY, executor);
 			}
 		}
 	}

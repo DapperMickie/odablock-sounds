@@ -3,6 +3,7 @@ package com.github.dappermickie.odablock;
 import com.github.dappermickie.odablock.emotes.EmoteHandler;
 import com.github.dappermickie.odablock.livestreams.LivestreamManager;
 import com.github.dappermickie.odablock.notifications.NotificationManager;
+import com.github.dappermickie.odablock.ui.SoundOverridesPanel;
 import com.github.dappermickie.odablock.sounds.AcbSpec;
 import com.github.dappermickie.odablock.sounds.AcceptTrade;
 import com.github.dappermickie.odablock.sounds.AchievementDiaries;
@@ -39,8 +40,14 @@ import com.github.dappermickie.odablock.sounds.Vengeance;
 import com.github.dappermickie.odablock.sounds.ZebakRoar;
 import com.google.inject.Provides;
 import com.google.inject.name.Named;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.inject.Inject;
+import javax.swing.SwingUtilities;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -75,6 +82,8 @@ import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.ui.ClientToolbar;
+import net.runelite.client.ui.NavigationButton;
 import okhttp3.OkHttpClient;
 
 @Slf4j
@@ -226,8 +235,16 @@ public class OdablockPlugin extends Plugin
 	private EmoteHandler emoteHandler;
 
 	@Inject
+	private ClientToolbar clientToolbar;
+
+	@Inject
+	private SoundOverridesPanel soundOverridesPanel;
+
+	@Inject
 	@Named("developerMode")
 	private boolean developerMode;
+
+	private NavigationButton soundOverridesNavigationButton;
 
 	public static final String ODABLOCK = "Odablock";
 
@@ -238,6 +255,7 @@ public class OdablockPlugin extends Plugin
 		achievementDiaries.setLastLoginTick(-1);
 		prayerDown.setLastLoginTick(-1);
 		emoteHandler.loadEmotes();
+		SwingUtilities.invokeLater(this::setUpOverridesNavigation);
 		executor.submit(() -> {
 			PlayerKillLineManager.Setup(okHttpClient);
 			SoundFileManager.ensureDownloadDirectoryExists();
@@ -253,6 +271,58 @@ public class OdablockPlugin extends Plugin
 		levelUp.clear();
 		achievementDiaries.clearOldAchievementDiaries();
 		soundEngine.close();
+		SwingUtilities.invokeLater(this::removeOverridesNavigation);
+	}
+
+	private void setUpOverridesNavigation()
+	{
+		removeOverridesNavigation();
+		soundOverridesNavigationButton = NavigationButton.builder()
+			.tooltip("Odablock Sound Overrides")
+			.icon(createOverridesIcon())
+			.priority(8)
+			.panel(soundOverridesPanel)
+			.build();
+		clientToolbar.addNavigation(soundOverridesNavigationButton);
+	}
+
+	private void removeOverridesNavigation()
+	{
+		if (soundOverridesNavigationButton != null)
+		{
+			clientToolbar.removeNavigation(soundOverridesNavigationButton);
+			soundOverridesNavigationButton = null;
+		}
+	}
+
+	private static BufferedImage createOverridesIcon()
+	{
+		final int size = 16;
+		BufferedImage image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D graphics = image.createGraphics();
+		try
+		{
+			graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+			graphics.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
+
+			Color speakerColor = new Color(235, 235, 235);
+			graphics.setColor(speakerColor);
+
+			int[] speakerX = {3, 6, 9, 9, 6, 3};
+			int[] speakerY = {6, 6, 3, 13, 10, 10};
+			graphics.fillPolygon(speakerX, speakerY, speakerX.length);
+
+			graphics.setStroke(new java.awt.BasicStroke(1.4f));
+			Color waveColor = new Color(255, 152, 41);
+			graphics.setColor(waveColor);
+			graphics.drawArc(7, 4, 4, 8, -55, 110);
+			graphics.drawArc(9, 2, 5, 12, -55, 110);
+		}
+		finally
+		{
+			graphics.dispose();
+		}
+		return image;
 	}
 
 	private void setupOldMaps()

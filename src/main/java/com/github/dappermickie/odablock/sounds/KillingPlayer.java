@@ -5,6 +5,7 @@ import com.github.dappermickie.odablock.OdablockConfig;
 import com.github.dappermickie.odablock.PlayerKillLineManager;
 import com.github.dappermickie.odablock.Sound;
 import com.github.dappermickie.odablock.SoundEngine;
+import com.github.dappermickie.odablock.overrides.SoundOverrideAction;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
@@ -92,6 +93,6 @@ public class KillingPlayer
 		{
 			client.addChatMessage(ChatMessageType.PUBLICCHAT, ODABLOCK, message, null);
 		}
-		soundEngine.playClip(Sound.KILLING_SOMEONE_1, executor);
+		soundEngine.playClip(Sound.KILLING_SOMEONE_1, SoundOverrideAction.KILLING_PLAYER, executor);
 	}
 }

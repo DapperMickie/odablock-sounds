@@ -8,6 +8,7 @@ import com.github.dappermickie.odablock.OdablockVarbits;
 import com.github.dappermickie.odablock.RandomSoundUtility;
 import com.github.dappermickie.odablock.Sound;
 import com.github.dappermickie.odablock.SoundEngine;
+import com.github.dappermickie.odablock.overrides.SoundOverrideAction;
 import java.util.Random;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.inject.Inject;
@@ -104,7 +105,7 @@ public class DhAxe extends TimedSoundBase
 		final int currentTick = client.getTickCount();
 		if (canPlaySound(currentTick))
 		{
-			soundEngine.playClip(sound, executor);
+			soundEngine.playClip(sound, toOverrideAction(sound), executor);
 
 			setLastPlayedTickTick(currentTick);
 		}
@@ -164,5 +165,22 @@ public class DhAxe extends TimedSoundBase
 			sound = Sound.DH_AXE_BLOCK;
 		}
 		return sound;
+	}
+
+	private SoundOverrideAction toOverrideAction(Sound sound)
+	{
+		switch (sound)
+		{
+			case DH_AXE_CHOP:
+				return SoundOverrideAction.DH_AXE_CHOP;
+			case DH_AXE_HACK:
+				return SoundOverrideAction.DH_AXE_HACK;
+			case DH_AXE_SMASH:
+				return SoundOverrideAction.DH_AXE_SMASH;
+			case DH_AXE_BLOCK:
+				return SoundOverrideAction.DH_AXE_BLOCK;
+			default:
+				return null;
+		}
 	}
 }

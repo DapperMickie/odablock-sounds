@@ -3,6 +3,7 @@ package com.github.dappermickie.odablock.sounds;
 import com.github.dappermickie.odablock.OdablockConfig;
 import com.github.dappermickie.odablock.Sound;
 import com.github.dappermickie.odablock.SoundEngine;
+import com.github.dappermickie.odablock.overrides.SoundOverrideAction;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
@@ -35,6 +36,7 @@ public class LevelUp
 	private ScheduledExecutorService executor;
 
 	private static final String message = "Level up: completed.";
+	private static final String level99Message = "Level 99: completed.";
 
 	private final Map<Skill, Integer> oldExperience = new EnumMap<>(Skill.class);
 
@@ -61,14 +63,28 @@ public class LevelUp
 			return;
 		}
 
-		// If we get here, 'skill' was leveled up!
+		// Hitting level 99 in a skill is a milestone and gets its own sound/announcement,
+		// taking precedence over the generic level-up sound for that single event.
+		final boolean justReached99 = levelBefore < Experience.MAX_REAL_LEVEL
+			&& levelAfter >= Experience.MAX_REAL_LEVEL;
+
+		if (justReached99 && config.announceLevel99())
+		{
+			if (config.showChatMessages())
+			{
+				client.addChatMessage(ChatMessageType.PUBLICCHAT, ODABLOCK, level99Message, null);
+			}
+			soundEngine.playClip(Sound.GAMON_GO_LIVE, SoundOverrideAction.LEVEL_99, executor);
+			return;
+		}
+
 		if (config.announceLevelUp())
 		{
 			if (config.showChatMessages())
 			{
 				client.addChatMessage(ChatMessageType.PUBLICCHAT, ODABLOCK, message, null);
 			}
-			soundEngine.playClip(Sound.LEVEL_UP, executor);
+			soundEngine.playClip(Sound.LEVEL_UP, SoundOverrideAction.LEVEL_UP, executor);
 		}
 	}
 

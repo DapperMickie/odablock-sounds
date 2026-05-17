@@ -3,6 +3,7 @@ package com.github.dappermickie.odablock.sounds;
 import com.github.dappermickie.odablock.OdablockConfig;
 import com.github.dappermickie.odablock.Sound;
 import com.github.dappermickie.odablock.SoundEngine;
+import com.github.dappermickie.odablock.overrides.SoundOverrideAction;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -58,7 +59,7 @@ public class PkChest
 		{
 			if (Text.standardize(widget.getText()).startsWith("value in chest: "))
 			{
-				soundEngine.playClip(Sound.CLICKING_PK_LOOT_CHEST, executor);
+				soundEngine.playClip(Sound.CLICKING_PK_LOOT_CHEST, SoundOverrideAction.PK_CHEST, executor);
 			}
 		}
 	}

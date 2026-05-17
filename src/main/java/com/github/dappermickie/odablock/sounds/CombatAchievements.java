@@ -4,6 +4,7 @@ import com.github.dappermickie.odablock.OdablockConfig;
 import static com.github.dappermickie.odablock.OdablockPlugin.ODABLOCK;
 import com.github.dappermickie.odablock.Sound;
 import com.github.dappermickie.odablock.SoundEngine;
+import com.github.dappermickie.odablock.overrides.SoundOverrideAction;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.regex.Pattern;
 import javax.inject.Inject;
@@ -42,7 +43,7 @@ public class CombatAchievements
 		{
 			client.addChatMessage(ChatMessageType.PUBLICCHAT, ODABLOCK, "Combat task: completed.", null);
 		}
-		soundEngine.playClip(Sound.COMBAT_TASK, executor);
+		soundEngine.playClip(Sound.COMBAT_TASK, SoundOverrideAction.COMBAT_ACHIEVEMENT, executor);
 		return true;
 	}
 }

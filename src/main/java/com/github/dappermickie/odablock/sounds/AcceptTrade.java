@@ -3,6 +3,7 @@ package com.github.dappermickie.odablock.sounds;
 import com.github.dappermickie.odablock.OdablockConfig;
 import com.github.dappermickie.odablock.Sound;
 import com.github.dappermickie.odablock.SoundEngine;
+import com.github.dappermickie.odablock.overrides.SoundOverrideAction;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.events.ChatMessage;
@@ -36,7 +37,7 @@ public class AcceptTrade
 			Text.standardize(chatMessage.getMessage()).equals("accepted trade.") &&
 			chatMessage.getName() == "")
 		{
-			soundEngine.playClip(Sound.ACCEPTED_TRADE, executor);
+			soundEngine.playClip(Sound.ACCEPTED_TRADE, SoundOverrideAction.ACCEPT_TRADE, executor);
 			return true;
 		}
 		return false;

@@ -3,6 +3,7 @@ package com.github.dappermickie.odablock.sounds;
 import com.github.dappermickie.odablock.OdablockConfig;
 import com.github.dappermickie.odablock.Sound;
 import com.github.dappermickie.odablock.SoundEngine;
+import com.github.dappermickie.odablock.overrides.SoundOverrideAction;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -36,7 +37,7 @@ public class Vengeance
 
 		if (config.vengeance() && varbitId == 2450 && varpId == 439 && value == 1)
 		{
-			soundEngine.playClip(Sound.VENGEANCE, executor);
+			soundEngine.playClip(Sound.VENGEANCE, SoundOverrideAction.VENGEANCE, executor);
 		}
 	}
 }

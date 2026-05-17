@@ -1,6 +1,7 @@
 package com.github.dappermickie.odablock.sounds;
 
 import com.github.dappermickie.odablock.*;
+import com.github.dappermickie.odablock.overrides.SoundOverrideAction;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
@@ -66,7 +67,7 @@ public class TurnOnRun extends TimedSoundBase
 				{
 					client.addChatMessage(ChatMessageType.PUBLICCHAT, ODABLOCK, message, null);
 				}
-				soundEngine.playClip(Sound.TURNING_ON_RUN, executor);
+				soundEngine.playClip(Sound.TURNING_ON_RUN, SoundOverrideAction.TURN_ON_RUN, executor);
 				setLastPlayedTickTick(currentTick);
 			}
 		}

@@ -3,6 +3,7 @@ package com.github.dappermickie.odablock.sounds;
 import com.github.dappermickie.odablock.OdablockConfig;
 import com.github.dappermickie.odablock.Sound;
 import com.github.dappermickie.odablock.SoundEngine;
+import com.github.dappermickie.odablock.overrides.SoundOverrideAction;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
@@ -40,7 +41,7 @@ public class Death
 			{
 				client.addChatMessage(ChatMessageType.PUBLICCHAT, ODABLOCK, "It must be a glitch?!?!", null);
 			}
-			soundEngine.playClip(Sound.DEATH, executor);
+			soundEngine.playClip(Sound.DEATH, SoundOverrideAction.DEATH, executor);
 		}
 	}
 }

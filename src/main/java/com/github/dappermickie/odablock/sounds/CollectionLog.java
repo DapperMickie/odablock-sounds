@@ -4,6 +4,7 @@ import com.github.dappermickie.odablock.OdablockConfig;
 import static com.github.dappermickie.odablock.OdablockPlugin.ODABLOCK;
 import com.github.dappermickie.odablock.Sound;
 import com.github.dappermickie.odablock.SoundEngine;
+import com.github.dappermickie.odablock.overrides.SoundOverrideAction;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.regex.Pattern;
@@ -77,7 +78,7 @@ public class CollectionLog
 		{
 			client.addChatMessage(ChatMessageType.PUBLICCHAT, ODABLOCK, "Collection log slot: completed.", null);
 		}
-		soundEngine.playClip(Sound.COLLECTION_LOG_SLOT, executor);
+		soundEngine.playClip(Sound.COLLECTION_LOG_SLOT, SoundOverrideAction.COLLECTION_LOG, executor);
 		return true;
 	}
 

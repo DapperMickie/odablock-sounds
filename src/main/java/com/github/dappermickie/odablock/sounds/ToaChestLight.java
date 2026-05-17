@@ -3,6 +3,7 @@ package com.github.dappermickie.odablock.sounds;
 import com.github.dappermickie.odablock.OdablockConfig;
 import com.github.dappermickie.odablock.Sound;
 import com.github.dappermickie.odablock.SoundEngine;
+import com.github.dappermickie.odablock.overrides.SoundOverrideAction;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -56,17 +57,17 @@ public class ToaChestLight
 				// TODO: Maybe change the sound if it's not your purple?
 				if (purpleIsMine)
 				{
-					soundEngine.playClip(Sound.GETTING_PURPLE_1, executor);
+					soundEngine.playClip(Sound.GETTING_PURPLE_1, SoundOverrideAction.TOA_PURPLE_CHEST, executor);
 				}
 				else
 				{
-					soundEngine.playClip(Sound.GETTING_PURPLE_1, executor);
+					soundEngine.playClip(Sound.GETTING_PURPLE_1, SoundOverrideAction.TOA_PURPLE_CHEST, executor);
 				}
 			}
 		}
 		else if (config.toaWhiteChest())
 		{
-			soundEngine.playClip(Sound.WHITE_LIGHT_AFTER_RAID, executor);
+			soundEngine.playClip(Sound.WHITE_LIGHT_AFTER_RAID, SoundOverrideAction.TOA_WHITE_CHEST, executor);
 		}
 	}
 

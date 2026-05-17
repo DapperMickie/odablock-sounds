@@ -101,12 +101,12 @@ public enum Sound
 	}
 
 
-	String getResourceName()
+	public String getResourceName()
 	{
 		return resourceName;
 	}
 
-	String getDirectory()
+	public String getDirectory()
 	{
 		return directory;
 	}

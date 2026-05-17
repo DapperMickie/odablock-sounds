@@ -5,6 +5,7 @@ import com.github.dappermickie.odablock.OdablockPlugin;
 import com.github.dappermickie.odablock.RandomSoundUtility;
 import com.github.dappermickie.odablock.Sound;
 import com.github.dappermickie.odablock.SoundEngine;
+import com.github.dappermickie.odablock.overrides.SoundOverrideAction;
 import java.util.Random;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
@@ -44,7 +45,7 @@ public class ReportPlayer
 
 		if (config.sendReport() && REPORT_SCREEN_GROUP_ID == groupId && option.equals(REPORT_FOR))
 		{
-			soundEngine.playClip(Sound.REPORT_PLAYER_1, executor);
+			soundEngine.playClip(Sound.REPORT_PLAYER_1, SoundOverrideAction.REPORT_PLAYER, executor);
 		}
 	}
 }

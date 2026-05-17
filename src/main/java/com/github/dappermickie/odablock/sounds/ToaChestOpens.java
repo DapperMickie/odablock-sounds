@@ -3,6 +3,7 @@ package com.github.dappermickie.odablock.sounds;
 import com.github.dappermickie.odablock.OdablockConfig;
 import com.github.dappermickie.odablock.Sound;
 import com.github.dappermickie.odablock.SoundEngine;
+import com.github.dappermickie.odablock.overrides.SoundOverrideAction;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -38,6 +39,6 @@ public class ToaChestOpens
 		}
 
 		// The sarcophagus spawns as the player starts looting the chest
-		soundEngine.playClip(Sound.TOA_CHEST_OPENS, executor);
+		soundEngine.playClip(Sound.TOA_CHEST_OPENS, SoundOverrideAction.TOA_CHEST_OPENS, executor);
 	}
 }

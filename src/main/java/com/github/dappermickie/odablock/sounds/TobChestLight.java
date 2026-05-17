@@ -5,6 +5,7 @@ package com.github.dappermickie.odablock.sounds;
 import com.github.dappermickie.odablock.OdablockConfig;
 import com.github.dappermickie.odablock.Sound;
 import com.github.dappermickie.odablock.SoundEngine;
+import com.github.dappermickie.odablock.overrides.SoundOverrideAction;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -99,17 +100,17 @@ public class TobChestLight
 						// TODO: Maybe change sound if it's yours
 						if (isMine)
 						{
-							soundEngine.playClip(Sound.GETTING_PURPLE_1, executor);
+							soundEngine.playClip(Sound.GETTING_PURPLE_1, SoundOverrideAction.TOB_PURPLE_CHEST, executor);
 						}
 						else
 						{
-							soundEngine.playClip(Sound.GETTING_PURPLE_1, executor);
+							soundEngine.playClip(Sound.GETTING_PURPLE_1, SoundOverrideAction.TOB_PURPLE_CHEST, executor);
 						}
 					}
 				}
 				else if (config.tobWhiteChest())
 				{
-					soundEngine.playClip(Sound.WHITE_LIGHT_AFTER_RAID, executor);
+					soundEngine.playClip(Sound.WHITE_LIGHT_AFTER_RAID, SoundOverrideAction.TOB_WHITE_CHEST, executor);
 				}
 			}
 		}
