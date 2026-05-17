@@ -30,13 +30,15 @@ import net.runelite.client.config.ConfigManager;
 @Slf4j
 public class SoundOverrideService
 {
-	private static final Gson GSON = new Gson();
 	private static final Type RAW_OVERRIDES_TYPE = new TypeToken<Map<String, List<String>>>()
 	{
 	}.getType();
 
 	@Inject
 	private ConfigManager configManager;
+
+	@Inject
+	private Gson gson;
 
 	public Optional<File> getRandomOverrideFile(final SoundOverrideAction action)
 	{
@@ -124,7 +126,7 @@ public class SoundOverrideService
 			}
 			export.put(action.getKey(), new ArrayList<>(keys));
 		}
-		return GSON.toJson(export);
+		return gson.toJson(export);
 	}
 
 	public ImportResult importOverridesFromJson(final String json) throws JsonSyntaxException
@@ -200,7 +202,7 @@ public class SoundOverrideService
 			throw new JsonSyntaxException("Override JSON is empty.");
 		}
 
-		Map<String, List<String>> incoming = GSON.fromJson(json, RAW_OVERRIDES_TYPE);
+		Map<String, List<String>> incoming = gson.fromJson(json, RAW_OVERRIDES_TYPE);
 		if (incoming == null)
 		{
 			throw new JsonSyntaxException("Override JSON did not parse to an object.");
@@ -355,7 +357,7 @@ public class SoundOverrideService
 
 		try
 		{
-			Map<String, List<String>> rawPools = GSON.fromJson(rawOverrideJson, RAW_OVERRIDES_TYPE);
+			Map<String, List<String>> rawPools = gson.fromJson(rawOverrideJson, RAW_OVERRIDES_TYPE);
 			if (rawPools == null || rawPools.isEmpty())
 			{
 				return new LinkedHashMap<>();
@@ -400,7 +402,7 @@ public class SoundOverrideService
 		configManager.setConfiguration(
 			OdablockConfig.CONFIG_GROUP,
 			OdablockConfig.SOUND_OVERRIDE_POOLS_KEY,
-			GSON.toJson(serialized)
+			gson.toJson(serialized)
 		);
 	}
 }
