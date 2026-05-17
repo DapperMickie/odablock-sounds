@@ -544,7 +544,7 @@ public interface OdablockConfig extends Config
 		name = "Notification Interval",
 		description = "Set the interval of the notification message for livestreams in minutes.",
 		section = LIVESTREAM_SECTION,
-		position = 402
+		position = 403
 	)
 	default int livestreamInterval()
 	{
@@ -552,11 +552,23 @@ public interface OdablockConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "livestreamPlaySound",
+		name = "Play Sound",
+		description = "Should Odablock play a sound when he goes live?",
+		section = LIVESTREAM_SECTION,
+		position = 402
+	)
+	default boolean livestreamPlaySound()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "livestreamColor",
 		name = "Notification Color",
 		description = "Set the color of the notification message for livestreams.",
 		section = LIVESTREAM_SECTION,
-		position = 402
+		position = 404
 	)
 	default Color livestreamColor()
 	{

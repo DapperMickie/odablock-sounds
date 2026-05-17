@@ -28,6 +28,7 @@ public class LivestreamManager
 	private Livestream livestream = null;
 	private int lastChecked = -1;
 	private int lastSentMessage = -1;
+	private boolean offlineAnnouncementSent = false;
 
 	@Inject
 	private Client client;
@@ -64,7 +65,7 @@ public class LivestreamManager
 		}
 
 		handleTickReset();
-		sendLivestreamMessage(false);
+		sendLiveLivestreamMessage(false);
 
 		int currentTick = client.getTickCount();
 		if (lastChecked == -1 || currentTick < lastChecked || currentTick - lastChecked > 100)
@@ -116,13 +117,27 @@ public class LivestreamManager
 			final boolean wasLive = livestream != null && livestream.isLive();
 			final boolean isLive = newLivestream.isLive();
 			final boolean becameLive = livestream != null && !wasLive && isLive;
+			final boolean becameOffline = livestream != null && wasLive && !isLive;
 
 			livestream = newLivestream;
 			clientThread.invokeLater(() -> {
-				sendLivestreamMessage(true);
+				if (isLive)
+				{
+					sendLiveLivestreamMessage(true);
+				}
+
 				if (becameLive)
 				{
-					livestreamLiveSound.playSound();
+					offlineAnnouncementSent = false;
+					if (config.livestreamPlaySound())
+					{
+						livestreamLiveSound.playSound();
+					}
+				}
+				else if (becameOffline && !offlineAnnouncementSent)
+				{
+					sendOfflineLivestreamMessage();
+					offlineAnnouncementSent = true;
 				}
 			});
 		}
@@ -134,7 +149,7 @@ public class LivestreamManager
 		}
 	}
 
-	private void sendLivestreamMessage(boolean force)
+	private void sendLiveLivestreamMessage(boolean force)
 	{
 		final int currentTick = client.getTickCount();
 
@@ -169,10 +184,25 @@ public class LivestreamManager
 				.append(title);
 		}
 
-		String message = chatMessage.build().replaceAll("colHIGHLIGHT", "col=" + hex);
+		queueLivestreamMessage(chatMessage.build(), hex);
+	}
+
+	private void sendOfflineLivestreamMessage()
+	{
+		ChatMessageBuilder chatMessage = new ChatMessageBuilder();
+		chatMessage
+			.append(ChatColorType.HIGHLIGHT)
+			.append("Odablock went offline.");
+
+		String hex = Integer.toHexString(config.livestreamColor().getRGB()).substring(2);
+		queueLivestreamMessage(chatMessage.build(), hex);
+	}
+
+	private void queueLivestreamMessage(String chatMessage, String hex)
+	{
+		String message = chatMessage.replaceAll("colHIGHLIGHT", "col=" + hex);
 		RightClickAction rightClickAction = new RightClickAction("Open Livestream", "https://kick.com/odablock");
 		chatRightClickManager.putInMap(message, rightClickAction);
-
 		chatMessageManager.queue(QueuedMessage.builder()
 			.type(ChatMessageType.GAMEMESSAGE)
 			.runeLiteFormattedMessage(message)
