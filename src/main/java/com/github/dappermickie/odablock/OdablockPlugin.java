@@ -277,6 +277,10 @@ public class OdablockPlugin extends Plugin
 	private void setUpOverridesNavigation()
 	{
 		removeOverridesNavigation();
+		if (!config.showSidebar())
+		{
+			return;
+		}
 		soundOverridesNavigationButton = NavigationButton.builder()
 			.tooltip("Odablock Sound Overrides")
 			.icon(createOverridesIcon())
@@ -522,6 +526,10 @@ public class OdablockPlugin extends Plugin
 		if (OdablockConfig.CONFIG_GROUP.equals(event.getGroup()))
 		{
 			collectionLog.onConfigChanged(event);
+			if (event.getKey().equals("showSidebar"))
+			{
+				SwingUtilities.invokeLater(this::setUpOverridesNavigation);
+			}
 		}
 	}
 

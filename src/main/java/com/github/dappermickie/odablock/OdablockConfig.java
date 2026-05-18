@@ -61,6 +61,18 @@ public interface OdablockConfig extends Config
 		return true;
 	}
 
+	@ConfigItem(
+		keyName = "showSidebar",
+		name = "Show Override Sidebar",
+		description = "Show the sound override sidebar panel on the right side of the screen.",
+		section = GENERAL_SECTION,
+		position = 14
+	)
+	default boolean showSidebar()
+	{
+		return false;
+	}
+
 	// =========================================================================
 	// Specs & Combat
 	// =========================================================================
