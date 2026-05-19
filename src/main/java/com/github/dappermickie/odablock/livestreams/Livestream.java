@@ -9,4 +9,7 @@ public class Livestream
 
 	@Getter
 	private String title;
+
+	@Getter
+	private String wentLiveAt;
 }

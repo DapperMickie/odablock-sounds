@@ -6,6 +6,9 @@ import com.github.dappermickie.odablock.RightClickAction;
 import com.github.dappermickie.odablock.sounds.LivestreamLiveSound;
 import com.google.gson.Gson;
 import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.Objects;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.inject.Inject;
@@ -25,10 +28,13 @@ import okhttp3.Response;
 @Singleton
 public class LivestreamManager
 {
+	private static final Duration LIVE_SOUND_MAX_AGE = Duration.ofMinutes(3);
+
 	private Livestream livestream = null;
 	private int lastChecked = -1;
 	private int lastSentMessage = -1;
 	private boolean offlineAnnouncementSent = false;
+	private boolean suppressLiveTransitionSound = false;
 
 	@Inject
 	private Client client;
@@ -84,6 +90,7 @@ public class LivestreamManager
 		// Keep the last livestream snapshot so hop/login doesn't count as a live transition.
 		lastChecked = -1;
 		lastSentMessage = -1;
+		suppressLiveTransitionSound = true;
 	}
 
 	private void sendRequest(final int currentTick)
@@ -108,16 +115,19 @@ public class LivestreamManager
 
 			if (livestream != null &&
 				newLivestream.isLive() == livestream.isLive() &&
-				Objects.equals(newLivestream.getTitle(), livestream.getTitle()))
+				Objects.equals(newLivestream.getTitle(), livestream.getTitle()) &&
+				Objects.equals(newLivestream.getWentLiveAt(), livestream.getWentLiveAt()))
 			{
 				lastChecked = currentTick;
 				return;
 			}
 
-			final boolean wasLive = livestream != null && livestream.isLive();
+			final Livestream previousLivestream = livestream;
+			final boolean wasLive = previousLivestream != null && previousLivestream.isLive();
 			final boolean isLive = newLivestream.isLive();
-			final boolean becameLive = livestream != null && !wasLive && isLive;
-			final boolean becameOffline = livestream != null && wasLive && !isLive;
+			final boolean becameOffline = previousLivestream != null && wasLive && !isLive;
+			final boolean wasSuppressingLiveSound = suppressLiveTransitionSound;
+			suppressLiveTransitionSound = false;
 
 			livestream = newLivestream;
 			clientThread.invokeLater(() -> {
@@ -126,13 +136,10 @@ public class LivestreamManager
 					sendLiveLivestreamMessage(true);
 				}
 
-				if (becameLive)
+				if (shouldPlayLiveSound(previousLivestream, newLivestream, wasSuppressingLiveSound))
 				{
 					offlineAnnouncementSent = false;
-					if (config.livestreamPlaySound())
-					{
-						livestreamLiveSound.playSound();
-					}
+					livestreamLiveSound.playSound();
 				}
 				else if (becameOffline && !offlineAnnouncementSent)
 				{
@@ -207,6 +214,50 @@ public class LivestreamManager
 			.type(ChatMessageType.GAMEMESSAGE)
 			.runeLiteFormattedMessage(message)
 			.build());
+	}
+
+	private boolean shouldPlayLiveSound(
+		Livestream previousLivestream,
+		Livestream newLivestream,
+		boolean wasSuppressingLiveSound)
+	{
+		if (!config.livestreamPlaySound() || wasSuppressingLiveSound || !newLivestream.isLive())
+		{
+			return false;
+		}
+
+		final Instant newWentLiveAt = parseWentLiveAt(newLivestream.getWentLiveAt());
+		if (newWentLiveAt == null)
+		{
+			return false;
+		}
+
+		final Instant previousWentLiveAt = parseWentLiveAt(
+			previousLivestream == null ? null : previousLivestream.getWentLiveAt());
+		if (Objects.equals(newWentLiveAt, previousWentLiveAt))
+		{
+			return false;
+		}
+
+		final Duration age = Duration.between(newWentLiveAt, Instant.now());
+		return !age.isNegative() && age.compareTo(LIVE_SOUND_MAX_AGE) <= 0;
+	}
+
+	private static Instant parseWentLiveAt(String wentLiveAt)
+	{
+		if (wentLiveAt == null || wentLiveAt.isEmpty())
+		{
+			return null;
+		}
+
+		try
+		{
+			return Instant.parse(wentLiveAt);
+		}
+		catch (DateTimeParseException e)
+		{
+			return null;
+		}
 	}
 
 	private void handleTickReset()
