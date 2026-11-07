@@ -31,6 +31,8 @@ public class TfaChestLight
 
 	private boolean chestsHandled;
 	private boolean rewardsSeen;
+	private boolean uniqueChestClosedSeen;
+	private boolean uniqueChestOpeningHandled;
 
 	@Inject
 	public TfaChestLight(Client client, OdablockConfig config, SoundEngine soundEngine,
@@ -56,13 +58,9 @@ public class TfaChestLight
 			return;
 		}
 
-		if (chestsHandled)
-		{
-			return;
-		}
-
 		boolean ownChest = client.getVarbitValue(OWN_CHEST_VARBIT) > 0;
 		boolean uniqueChest = false;
+		boolean uniqueChestOpen = false;
 		for (NPC npc : client.getNpcs())
 		{
 			// The eight standard chests transform according to ownership and opened state.
@@ -80,14 +78,34 @@ public class TfaChestLight
 			switch (id)
 			{
 				case NpcID.TFA_UNIQUE_CHEST_VAULT_CLOSED:
+					uniqueChest = true;
+					uniqueChestClosedSeen = true;
+					break;
 				case NpcID.TFA_UNIQUE_CHEST_VAULT_OPEN:
 					uniqueChest = true;
+					uniqueChestOpen = true;
 					break;
 				case NpcID.TFA_REWARDS_CHEST_VAULT_CLOSED_MINE:
 				case NpcID.TFA_REWARDS_CHEST_VAULT_OPEN_MINE:
 					ownChest = true;
 					break;
 			}
+		}
+
+		// The reveal and opening are separate events. Keep watching after the reveal,
+		// and require a closed chest first so loading an already-open chest is silent.
+		if (uniqueChestOpen && uniqueChestClosedSeen && !uniqueChestOpeningHandled)
+		{
+			uniqueChestOpeningHandled = true;
+			if (config.tfaPurpleChestOpens())
+			{
+				soundEngine.playClip(Sound.TOA_CHEST_OPENS, executor);
+			}
+		}
+
+		if (chestsHandled)
+		{
+			return;
 		}
 
 		if (!ownChest && !uniqueChest)
@@ -134,5 +152,7 @@ public class TfaChestLight
 	{
 		chestsHandled = false;
 		rewardsSeen = false;
+		uniqueChestClosedSeen = false;
+		uniqueChestOpeningHandled = false;
 	}
 }

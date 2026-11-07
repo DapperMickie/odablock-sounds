@@ -184,6 +184,85 @@ public class TfaChestLightTest
 		verifyNoInteractions(engine);
 	}
 
+	@Test
+	public void purpleOpeningPlaysOnceAfterRevealEvenForATeammatesChest()
+	{
+		when(config.tfaPurpleChestOpens()).thenReturn(true);
+		List<NPC> chests = new ArrayList<>();
+		chests.add(chest(NpcID.TFA_REWARDS_CHEST_VAULT_CLOSED_MINE));
+		chests.add(chest(NpcID.TFA_UNIQUE_CHEST_VAULT_CLOSED));
+		doReturn(chests).when(client).getNpcs();
+		tick();
+		tick();
+		verify(engine).playClip(Sound.WHITE_LIGHT_AFTER_RAID, executor);
+		verify(engine, never()).playClip(Sound.TOA_CHEST_OPENS, executor);
+		chests.set(1, chest(NpcID.TFA_UNIQUE_CHEST_VAULT_OPEN));
+		tick();
+		tick();
+		verify(engine).playClip(Sound.TOA_CHEST_OPENS, executor);
+		verifyNoMoreInteractions(engine);
+	}
+
+	@Test
+	public void openingToggleIsIndependentAndDoesNotReplayWhenEnabledAfterOpening()
+	{
+		when(config.tfaPurpleChest()).thenReturn(false);
+		doReturn(Collections.singletonList(chest(NpcID.TFA_UNIQUE_CHEST_VAULT_CLOSED))).when(client).getNpcs();
+		tick();
+		tick();
+		doReturn(Collections.singletonList(chest(NpcID.TFA_UNIQUE_CHEST_VAULT_OPEN))).when(client).getNpcs();
+		tick();
+		when(config.tfaPurpleChestOpens()).thenReturn(true);
+		tick();
+		verifyNoInteractions(engine);
+		handler.reset();
+		doReturn(Collections.singletonList(chest(NpcID.TFA_UNIQUE_CHEST_VAULT_CLOSED))).when(client).getNpcs();
+		tick();
+		tick();
+		doReturn(Collections.singletonList(chest(NpcID.TFA_UNIQUE_CHEST_VAULT_OPEN))).when(client).getNpcs();
+		tick();
+		verify(engine).playClip(Sound.TOA_CHEST_OPENS, executor);
+		verifyNoMoreInteractions(engine);
+	}
+
+	@Test
+	public void alreadyOpenAndRegularChestsDoNotTriggerPurpleOpening()
+	{
+		when(config.tfaPurpleChestOpens()).thenReturn(true);
+		when(config.tfaPurpleChest()).thenReturn(false);
+		when(config.tfaWhiteChest()).thenReturn(false);
+		doReturn(Collections.singletonList(chest(NpcID.TFA_UNIQUE_CHEST_VAULT_OPEN))).when(client).getNpcs();
+		tick();
+		tick();
+		handler.reset();
+		doReturn(Collections.singletonList(chest(NpcID.TFA_REWARDS_CHEST_VAULT_CLOSED_MINE))).when(client).getNpcs();
+		tick();
+		doReturn(Collections.singletonList(chest(NpcID.TFA_REWARDS_CHEST_VAULT_OPEN_MINE))).when(client).getNpcs();
+		tick();
+		tick();
+		verifyNoInteractions(engine);
+	}
+
+	@Test
+	public void leavingLootRoomResetsOpeningForNextRaid()
+	{
+		when(config.tfaPurpleChestOpens()).thenReturn(true);
+		when(config.tfaPurpleChest()).thenReturn(false);
+		for (int run = 0; run < 2; run++)
+		{
+			setRegion(16474);
+			doReturn(Collections.singletonList(chest(NpcID.TFA_UNIQUE_CHEST_VAULT_CLOSED))).when(client).getNpcs();
+			tick();
+			tick();
+			doReturn(Collections.singletonList(chest(NpcID.TFA_UNIQUE_CHEST_VAULT_OPEN))).when(client).getNpcs();
+			tick();
+			setRegion(16470);
+			tick();
+		}
+		verify(engine, times(2)).playClip(Sound.TOA_CHEST_OPENS, executor);
+		verifyNoMoreInteractions(engine);
+	}
+
 	private void setRegion(int region)
 	{
 		WorldPoint point = mock(WorldPoint.class);

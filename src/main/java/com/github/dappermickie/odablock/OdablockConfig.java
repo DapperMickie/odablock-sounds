@@ -750,6 +750,18 @@ public interface OdablockConfig extends Config
 		return true;
 	}
 
+	@ConfigItem(
+		keyName = "tfaPurpleChestOpens",
+		name = "Opening the Chest",
+		description = "When enabled, Odablock will say 'Please GAGECK' whenever someone in your party opens the purple chest at The Fractured Archive.",
+		section = TFA_SECTION,
+		position = 353
+	)
+	default boolean tfaPurpleChestOpens()
+	{
+		return true;
+	}
+
 	// =========================================================================
 	// Music & Emotes
 	// =========================================================================
