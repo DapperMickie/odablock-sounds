@@ -92,6 +92,7 @@ public enum Sound
 
 	// Music & Emotes
 	WARRIOR("warriors", "odablock_warriors.wav"),
+	TERRY("terry", "Terry.wav"),
 
 	// Livestream
 	LIVESTREAM("livestream", "Livestream.wav"),

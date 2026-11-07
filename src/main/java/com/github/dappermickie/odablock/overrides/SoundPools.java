@@ -170,6 +170,7 @@ public final class SoundPools
 		names.put("crypt", "Crypt (Dharok Barrows)");
 		names.put("freeze", "Freeze");
 		names.put("warriors", "Odablock Warriors");
+		names.put("terry", "Terry - Odablock X @ACRAZEOFFICIAL");
 		names.put("clientdisconnects", "Client Disconnects");
 		return Collections.unmodifiableMap(names);
 	}

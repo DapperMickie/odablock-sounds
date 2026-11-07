@@ -1,53 +1,51 @@
 package com.github.dappermickie.odablock.sounds;
 
-
 import com.github.dappermickie.odablock.OdablockConfig;
 import com.github.dappermickie.odablock.Sound;
 import com.github.dappermickie.odablock.SoundEngine;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.inject.Inject;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
+import net.runelite.api.ScriptID;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.events.WidgetLoaded;
 import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.widgets.Widget;
+import net.runelite.api.widgets.JavaScriptCallback;
+import net.runelite.api.widgets.WidgetType;
+import net.runelite.api.widgets.WidgetSizeMode;
 
+/** Adds plugin music without changing any of the game's track widgets. */
 public class OdablockWarriors
 {
-	private static final String ORIGINAL_TRACK_NAME = "7th Realm";
-	private static final String REPLACEMENT_TRACK_NAME = "Odablock Warriors";
+	private static final int ROW_HEIGHT = 16;
+	private final Map<Sound, Widget> entries = new LinkedHashMap<>();
 
-	@Inject
-	private Client client;
+	@Inject private Client client;
+	@Inject private SoundEngine soundEngine;
+	@Inject private ScheduledExecutorService executor;
+	@Inject private OdablockConfig config;
 
-	@Inject
-	private SoundEngine soundEngine;
-
-	@Inject
-	private ScheduledExecutorService executor;
-
-	@Inject
-	private OdablockConfig config;
-
-	private int warriorWidgetId = -1;
+	private Widget parent;
+	private int originalListHeight;
+	private int originalListHeightMode;
+	private int originalRenderedListHeight;
+	private int originalScrollHeight;
+	private Sound playing;
 
 	public void onWidgetLoaded(WidgetLoaded event)
 	{
-		if (event.getGroupId() != InterfaceID.MUSIC)
+		// The game populates the list after WidgetLoaded; the next tick adds our rows.
+		if (event.getGroupId() == InterfaceID.MUSIC)
 		{
-			return;
+			entries.clear();
+			parent = null;
 		}
-
-		warriorWidgetId = -1;
-
-		if (!config.warriors())
-		{
-			return;
-		}
-
-		renameTrackWidget();
 	}
 
 	public void onMenuOptionClicked(MenuOptionClicked event)
@@ -57,100 +55,199 @@ public class OdablockWarriors
 			return;
 		}
 
-		String target = stripTags(event.getMenuTarget());
-		if (!config.warriors())
+		for (Map.Entry<Sound, Widget> entry : entries.entrySet())
 		{
-			soundEngine.stopManagedClip();
-			return;
+			Widget row = entry.getValue();
+			// Dynamic children share a packed id: both parent id and child index matter.
+			if (isAttached(row) && event.getParam1() == row.getId()
+				&& event.getParam0() == row.getIndex() && enabled(entry.getKey()))
+			{
+				// Let the widget operation callback handle this custom entry.
+				return;
+			}
 		}
 
-		if (warriorWidgetId != event.getParam1()
-			&& !ORIGINAL_TRACK_NAME.equals(target)
-			&& !REPLACEMENT_TRACK_NAME.equals(target))
-		{
-			soundEngine.stopManagedClip();
-			return;
-		}
-
-		event.consume();
-
-		soundEngine.playManagedClip(Sound.WARRIOR, executor);
+		// Let ordinary music controls and original tracks work normally.
+		stop();
 	}
 
 	public void onGameTick(GameTick event)
 	{
 		if (client.getGameState() != GameState.LOGGED_IN)
 		{
+			stop();
 			return;
 		}
-
-		if (!config.warriors())
-		{
-			return;
-		}
-
-		renameTrackWidget();
+		updateEntries();
 	}
 
 	public void onConfigChanged(String key)
 	{
-		if (!"warriors".equals(key))
+		if (!"warriors".equals(key) && !"terry".equals(key))
 		{
 			return;
 		}
-
-		if (!config.warriors())
+		if (playing != null && !enabled(playing))
 		{
-			warriorWidgetId = -1;
-			soundEngine.stopManagedClip();
+			stop();
 		}
+		updateEntries();
 	}
 
-	private void renameTrackWidget()
+	public void shutDown()
 	{
-		Widget trackList = client.getWidget(InterfaceID.Music.JUKEBOX);
-		if (trackList == null)
+		stop();
+		removeEntries();
+		parent = null;
+	}
+
+	private boolean enabled(Sound sound)
+	{
+		return sound == Sound.WARRIOR ? config.warriors() : config.terry();
+	}
+
+	private boolean isAttached(Widget row)
+	{
+		Widget[] children = parent == null ? null : parent.getChildren();
+		return children != null && row.getIndex() >= 0 && row.getIndex() < children.length
+			&& children[row.getIndex()] == row;
+	}
+
+	private void updateEntries()
+	{
+		Widget list = client.getWidget(InterfaceID.Music.JUKEBOX);
+		if (list == null)
+		{
+			return;
+		}
+		if (parent != list || entries.values().stream().anyMatch(row -> !isAttached(row)))
+		{
+			entries.clear();
+			parent = list;
+			originalListHeight = list.getOriginalHeight();
+			originalListHeightMode = list.getHeightMode();
+			originalRenderedListHeight = list.getHeight();
+			Widget scroll = client.getWidget(InterfaceID.Music.SCROLLABLE);
+			originalScrollHeight = scroll == null ? 0 : scroll.getScrollHeight();
+		}
+
+		if (entries.containsKey(Sound.WARRIOR) == config.warriors()
+			&& entries.containsKey(Sound.TERRY) == config.terry())
 		{
 			return;
 		}
 
-		for (Widget track : trackList.getDynamicChildren())
+		removeEntries();
+		int y = 0;
+		Widget template = null;
+		for (Widget row : list.getDynamicChildren())
 		{
-			if (renameTrackWidget(track))
+			if (row != null && !row.isSelfHidden())
 			{
-				return;
+				y = Math.max(y, row.getRelativeY() + row.getHeight());
+				if (row.getType() == WidgetType.TEXT)
+				{
+					template = row;
+				}
 			}
 		}
+		for (Sound sound : new Sound[]{Sound.WARRIOR, Sound.TERRY})
+		{
+			if (!enabled(sound))
+			{
+				continue;
+			}
+			String label = sound == Sound.WARRIOR ? "Odablock Warriors" : "Terry";
+			Widget row = list.createChild(-1, WidgetType.TEXT)
+				.setText(label)
+				.setName("<col=ff9040>" + label + "</col>")
+				.setTextColor(0xff9040)
+				.setFontId(template == null ? 494 : template.getFontId())
+				.setTextShadowed(true)
+				.setOriginalX(template == null ? 0 : template.getRelativeX())
+				.setOriginalY(y)
+				.setOriginalWidth(template == null ? Math.max(170, list.getWidth()) : template.getWidth())
+				.setOriginalHeight(ROW_HEIGHT)
+				.setHasListener(true);
+			row.setAction(0, "Play");
+			row.setAction(1, "Stop");
+			// Without an operation listener, the client omits these actions from the menu.
+			row.setOnOpListener((JavaScriptCallback) event -> {
+				if (!isAttached(row) || !enabled(sound))
+				{
+					return;
+				}
+				if (event.getOp() == 1)
+				{
+					playing = sound;
+					soundEngine.playManagedClip(sound, executor);
+				}
+				else if (event.getOp() == 2)
+				{
+					stop();
+				}
+			});
+			row.revalidate();
+			entries.put(sound, row);
+			y += ROW_HEIGHT;
+		}
+		if (!entries.isEmpty())
+		{
+			// The native container uses relative sizing. A pixel height in MINUS mode
+			// makes it negative and clips the entire music list.
+			list.setHeightMode(WidgetSizeMode.ABSOLUTE);
+			list.setOriginalHeight(Math.max(originalRenderedListHeight, y));
+			list.revalidate();
+			resizeScroll(Math.max(originalScrollHeight, list.getRelativeY() + y));
+		}
 	}
 
-	private boolean renameTrackWidget(Widget widget)
+	private void removeEntries()
 	{
-		if (widget == null)
+		if (parent == null || entries.isEmpty())
 		{
-			return false;
+			return;
 		}
-
-		String text = widget.getText();
-		if (ORIGINAL_TRACK_NAME.equals(text) || REPLACEMENT_TRACK_NAME.equals(text))
+		Widget[] children = parent.getChildren();
+		if (children != null)
 		{
-			widget.setText(REPLACEMENT_TRACK_NAME);
-			widget.setName("<col=ff9040>" + REPLACEMENT_TRACK_NAME + "</col>");
-			widget.setTextColor(901389);
-			widget.revalidate();
-			warriorWidgetId = widget.getId();
-			return true;
+			children = children.clone();
+			for (Widget row : entries.values())
+			{
+				if (isAttached(row))
+				{
+					children[row.getIndex()] = null;
+				}
+			}
+			int length = children.length;
+			while (length > 0 && children[length - 1] == null)
+			{
+				length--;
+			}
+			parent.setChildren(Arrays.copyOf(children, length));
 		}
-
-		return false;
+		entries.clear();
+		parent.setHeightMode(originalListHeightMode);
+		parent.setOriginalHeight(originalListHeight);
+		parent.revalidate();
+		resizeScroll(originalScrollHeight);
 	}
 
-	private static String stripTags(String text)
+	private void resizeScroll(int height)
 	{
-		if (text == null)
+		Widget scroll = client.getWidget(InterfaceID.Music.SCROLLABLE);
+		if (scroll != null)
 		{
-			return "";
+			scroll.setScrollHeight(height);
+			scroll.revalidateScroll();
+			client.runScript(ScriptID.UPDATE_SCROLLBAR, InterfaceID.Music.SCROLLBAR,
+				InterfaceID.Music.SCROLLABLE, scroll.getScrollY());
 		}
+	}
 
-		return text.replaceAll("<[^>]*>", "");
+	private void stop()
+	{
+		soundEngine.stopManagedClip();
+		playing = null;
 	}
 }

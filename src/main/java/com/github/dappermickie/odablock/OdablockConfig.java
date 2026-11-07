@@ -756,7 +756,7 @@ public interface OdablockConfig extends Config
 
 	@ConfigSection(
 		name = "Music & Emotes",
-		description = "Music replacements and Odablock emote handling.",
+		description = "Additional music tracks and Odablock emote handling.",
 		position = 400
 	)
 	String MUSIC_EMOTES_SECTION = "musicEmotesSection";
@@ -764,12 +764,23 @@ public interface OdablockConfig extends Config
 	@ConfigItem(
 		keyName = "warriors",
 		name = "Odablock Warriors",
-		description = "Should the '7th Realm' in-game sound be replaced with the Odablock Warriors song?",
+		description = "Add Odablock Warriors as its own entry at the bottom of the in-game music player.",
 		section = MUSIC_EMOTES_SECTION,
-		position = 401,
-		warning = "If you turn this off, you'll have to reload the client to be able to manually play '7th Realm' again."
+		position = 401
 	)
 	default boolean warriors()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "terry",
+		name = "Terry",
+		description = "Add Terry - Odablock X @ACRAZEOFFICIAL as its own entry at the bottom of the in-game music player.",
+		section = MUSIC_EMOTES_SECTION,
+		position = 401
+	)
+	default boolean terry()
 	{
 		return true;
 	}

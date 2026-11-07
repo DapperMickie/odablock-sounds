@@ -320,6 +320,7 @@ public class OdablockPlugin extends Plugin
 		tfaChestLight.reset();
 		levelUp.clear();
 		achievementDiaries.clearOldAchievementDiaries();
+		clientThread.invoke(odablockWarriors::shutDown);
 		soundEngine.close();
 		customBarrowsFaces.shutDown();
 		overlayManager.remove(customBarrowsFacesOverlay);
@@ -614,7 +615,7 @@ public class OdablockPlugin extends Plugin
 		if (OdablockConfig.CONFIG_GROUP.equals(event.getGroup()))
 		{
 			collectionLog.onConfigChanged(event);
-			odablockWarriors.onConfigChanged(event.getKey());
+			clientThread.invoke(() -> odablockWarriors.onConfigChanged(event.getKey()));
 			if (event.getKey().equals("showSidebar"))
 			{
 				SwingUtilities.invokeLater(this::setUpOverridesNavigation);

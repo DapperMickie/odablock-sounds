@@ -54,6 +54,17 @@ Once your files are in the `custom` folder, open the **Sound Overrides** panel i
 - **File not showing in the picker?** Confirm it's a valid `.wav` file and is inside the `custom` folder. Restart the client if needed.
 - **Want to reset everything?** Delete the `odablock-sounds` folder and reload your client. All defaults will re-download and a fresh `custom` folder will be created.
 
+### Music player tracks
+
+Enable **Odablock Warriors** and/or **Terry** under **Music & Emotes** to add separate
+entries at the bottom of the in-game music player. Use **Play** or **Stop** on each
+entry. Selecting a normal game track stops the plugin song; all original tracks,
+including **7th Realm**, remain available. Disabling a track removes its entry.
+
+Terry - Odablock X @ACRAZEOFFICIAL uses `terry/Terry.wav` on the `sounds-v2` branch.
+Both songs use the existing sound downloader; Terry will be available once that file is uploaded.
+Both songs use the plugin's announcement volume.
+
 ### Legacy Custom Folders
 
 If you previously used the per-sound-directory `custom` subfolders (e.g., `odablock-sounds/death/custom/`), those still work. However, we recommend moving your files into the single root `custom` folder for simplicity — it's easier to manage and will never be deleted.
