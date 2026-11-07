@@ -39,7 +39,6 @@ import com.github.dappermickie.odablock.sounds.QuestCompleted;
 import com.github.dappermickie.odablock.sounds.RedemptionProc;
 import com.github.dappermickie.odablock.sounds.ReportPlayer;
 import com.github.dappermickie.odablock.sounds.RubyBoltProc;
-import com.github.dappermickie.odablock.sounds.SpellbookSwap;
 import com.github.dappermickie.odablock.sounds.SnowBalled;
 import com.github.dappermickie.odablock.sounds.ToaChestLight;
 import com.github.dappermickie.odablock.sounds.TfaChestLight;
@@ -237,9 +236,6 @@ public class OdablockPlugin extends Plugin
 	private OdablockWarriors odablockWarriors;
 
 	@Inject
-	private SpellbookSwap spellbookSwap;
-
-	@Inject
 	private FreezeSound freezeSound;
 
 	@Inject
@@ -300,7 +296,6 @@ public class OdablockPlugin extends Plugin
 		clientThread.invoke(this::setupOldMaps);
 		achievementDiaries.setLastLoginTick(-1);
 		prayerDown.setLastLoginTick(-1);
-		spellbookSwap.setLastLoginTick(-1);
 		emoteHandler.loadEmotes();
 		SwingUtilities.invokeLater(this::setUpOverridesNavigation);
 		overlayManager.add(customBarrowsFacesOverlay);
@@ -418,7 +413,6 @@ public class OdablockPlugin extends Plugin
 
 				achievementDiaries.setLastLoginTick(-1);
 				prayerDown.setLastLoginTick(-1);
-				spellbookSwap.setLastLoginTick(-1);
 				collectionLog.setlastColLogSettingWarning();
 				break;
 			case LOGGED_IN:
@@ -427,7 +421,6 @@ public class OdablockPlugin extends Plugin
 				levelUp.setLastLoginTick(currentTick);
 				achievementDiaries.setLastLoginTick(currentTick);
 				prayerDown.setLastLoginTick(currentTick);
-				spellbookSwap.setLastLoginTick(currentTick);
 				break;
 		}
 	}
@@ -527,7 +520,6 @@ public class OdablockPlugin extends Plugin
 		collectionLog.onVarbitChanged(event);
 		achievementDiaries.onVarbitChanged(event);
 		killingPlayer.onVarbitChanged(event);
-		spellbookSwap.onVarbitChanged(event);
 	}
 
 	@Subscribe

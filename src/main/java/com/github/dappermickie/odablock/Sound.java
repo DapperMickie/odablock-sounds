@@ -79,10 +79,6 @@ public enum Sound
 	TURNING_ON_RUN("turningonrun", "TurningOnRun.wav"),
 	ITEM_DROP("itemdrop", "OhMyRod.wav"),
 	TYPING_IN_BANKPIN("typingbankpin", "TypingInBankpin.wav"),
-	SPELLBOOK_SWAP_1("spellbookswap", "SpellbookSwap_r1.wav"),
-	SPELLBOOK_SWAP_2("spellbookswap", "SpellbookSwap_r2.wav"),
-	SPELLBOOK_SWAP_3("spellbookswap", "SpellbookSwap_r3.wav"),
-	SPELLBOOK_SWAP_4("spellbookswap", "SpellbookSwap_r4.wav"),
 
 	// Tombs of Amascut
 	WHITE_LIGHT_AFTER_RAID("whitelight", "WhiteLightAfterRaid.wav"),

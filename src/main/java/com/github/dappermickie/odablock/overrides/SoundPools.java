@@ -161,7 +161,6 @@ public final class SoundPools
 		names.put("hairdresser", "Hairdresser");
 		names.put("snowball", "Snowballed");
 		names.put("killingrat", "Killing Rat / Scurrius");
-		names.put("spellbookswap", "Spellbook Swap");
 		names.put("odasalert", "Notification Alert");
 		names.put("livestream", "Livestream Go Live");
 		names.put("phoenixnecklace", "Phoenix Necklace");

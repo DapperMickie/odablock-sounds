@@ -573,17 +573,6 @@ public interface OdablockConfig extends Config
 		return true;
 	}
 
-	@ConfigItem(
-		keyName = "spellbookSwap",
-		name = "Spellbook Swap",
-		description = "Should Odablock say something whenever you swap your spellbook? (Magic Cape, Max Cape, Lunar spell, or POH altar)",
-		section = INTERACTIONS_SECTION,
-		position = 61
-	)
-	default boolean spellbookSwap()
-	{
-		return true;
-	}
 
 	@ConfigItem(
 		keyName = "itemDrop",
