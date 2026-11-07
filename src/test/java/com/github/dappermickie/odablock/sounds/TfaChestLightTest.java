@@ -71,16 +71,19 @@ public class TfaChestLightTest
 	}
 
 	@Test
-	public void noSparklingChestPlaysPurpleBeforeUniqueRevealAndDoesNotReplay()
+	public void waitsForUniqueRevealBeforePlayingPurpleOnce()
 	{
 		List<NPC> chests = standardChests();
 		doReturn(chests).when(client).getNpcs();
 		tick();
 		verifyNoInteractions(engine);
 		tick();
-		verify(engine).playClip(Sound.GETTING_PURPLE_1, executor);
+		verifyNoInteractions(engine);
 		chests.add(chest(NpcID.TFA_UNIQUE_CHEST_VAULT_CLOSED));
 		tick();
+		verifyNoInteractions(engine);
+		tick();
+		verify(engine).playClip(Sound.GETTING_PURPLE_1, executor);
 		verifyNoMoreInteractions(engine);
 	}
 
@@ -88,7 +91,7 @@ public class TfaChestLightTest
 	public void disabledPurpleDoesNotFallBackToWhite()
 	{
 		when(config.tfaPurpleChest()).thenReturn(false);
-		doReturn(standardChests()).when(client).getNpcs();
+		doReturn(Collections.singletonList(chest(NpcID.TFA_UNIQUE_CHEST_VAULT_CLOSED))).when(client).getNpcs();
 		tick();
 		tick();
 		verifyNoInteractions(engine);
@@ -165,6 +168,7 @@ public class TfaChestLightTest
 		tick();
 		when(chests.get(0).hasSpotAnim(SpotanimID.VFX_TFA_SMALL_CHEST_SPARKLES)).thenReturn(true);
 		chests.add(chest(NpcID.TFA_UNIQUE_CHEST_VAULT_CLOSED));
+		tick();
 		tick();
 		verify(engine).playClip(Sound.WHITE_LIGHT_AFTER_RAID, executor);
 		verifyNoMoreInteractions(engine);

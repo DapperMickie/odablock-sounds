@@ -673,20 +673,37 @@ public class OdablockPlugin extends Plugin
 	@Subscribe
 	public void onAreaSoundEffectPlayed(AreaSoundEffectPlayed event)
 	{
+		if (!shouldHandlePlayerSound(event.getSource()))
+		{
+			return;
+		}
 		acbSpec.onAreaSoundEffectPlayed(event);
 	}
 
 	@Subscribe
 	public void onSoundEffectPlayed(SoundEffectPlayed event)
 	{
-		rubyBoltProc.onSoundEffectPlayed(event);
+		// UI sounds have no actor; boss sounds intentionally originate from an NPC.
 		enteringBankPin.onSoundEffectPlayed(event);
+		zebakRoar.onSoundEffectPlayed(event);
+
+		if (!shouldHandlePlayerSound(event.getSource()))
+		{
+			return;
+		}
+		rubyBoltProc.onSoundEffectPlayed(event);
 		redemptionProc.onSoundPlayed(event);
 		agsSpec.onSoundEffectPlayed(event);
 		ddsSpec.onSoundEffectPlayed(event);
 		prayerDown.onSoundEffectPlayed(event);
-		zebakRoar.onSoundEffectPlayed(event);
 		acbSpec.onSoundEffectPlayed(event);
+	}
+
+	private boolean shouldHandlePlayerSound(net.runelite.api.Actor source)
+	{
+		// Unknown sources cannot be attributed to our player, including during login.
+		return !config.ownPlayerOnly()
+			|| (source != null && source == client.getLocalPlayer());
 	}
 
 	@Subscribe

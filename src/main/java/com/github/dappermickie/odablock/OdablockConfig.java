@@ -729,7 +729,7 @@ public interface OdablockConfig extends Config
 	@ConfigItem(
 		keyName = "tfaWhiteChest",
 		name = "TFA White Chest",
-		description = "Should Odablock say something when your regular chest sparkles at The Fractured Archive?",
+		description = "Should Odablock say something when your regular chest is revealed at The Fractured Archive?",
 		section = TFA_SECTION,
 		position = 351
 	)
@@ -741,7 +741,7 @@ public interface OdablockConfig extends Config
 	@ConfigItem(
 		keyName = "tfaPurpleChest",
 		name = "TFA Purple Chest",
-		description = "Should Odablock say something when you have no sparkling regular chest at The Fractured Archive?",
+		description = "Should Odablock say something when your purple chest is revealed at The Fractured Archive?",
 		section = TFA_SECTION,
 		position = 352
 	)

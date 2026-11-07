@@ -48,11 +48,11 @@ public class KillingPlayer
 		// Player Kill message checks
 		if (config.playerKilling() &&
 			chatMessage.getName().equals(""))
+		{
 			if (standardized.contains("%"))
 			{
 				return false;
 			}
-		{
 			Pattern[] patterns = PlayerKillLineManager.getPatterns();
 			if (isPlayerKillMessage(standardized, patterns))
 			{
