@@ -45,14 +45,34 @@ public class EmoteHandler
 	private int[] chatIconIds;
 	private int[] overheadIconIds;
 
+	@Inject private EmoteCatalog catalog;
+	@Inject private java.util.concurrent.ScheduledExecutorService executor;
+	private java.util.concurrent.ScheduledFuture<?> refreshTask;
+	private long generation;
+
 	public void loadEmotes()
 	{
-		if (chatIconIds != null)
-		{
-			return;
-		}
-
-		Emote[] emotes = Emote.values();
+		catalog.reset();
+		long active = ++generation;
+		refreshTask = executor.scheduleWithFixedDelay(() -> {
+			try
+			{
+				Emote[] emotes = catalog.refresh();
+				if (emotes != null) clientThread.invoke(() -> {
+					if (generation != active) return;
+					install(emotes);
+				});
+			}
+			catch (Exception e) { log.warn("Could not refresh emotes", e); }
+		}, 0, 5, java.util.concurrent.TimeUnit.MINUTES);
+	}
+	public void shutDown()
+	{
+		++generation;
+		if (refreshTask != null) refreshTask.cancel(false);
+	}
+	private void install(Emote[] emotes)
+	{
 		final int[] loadedChatIconIds = new int[emotes.length];
 		final int[] loadedOverheadIconIds = new int[emotes.length];
 
@@ -66,6 +86,7 @@ public class EmoteHandler
 		}
 		overheadIconIds = loadedOverheadIconIds;
 		chatIconIds = loadedChatIconIds;
+		Emote.install(emotes);
 	}
 
 	public void onChatMessage(ChatMessage chatMessage)

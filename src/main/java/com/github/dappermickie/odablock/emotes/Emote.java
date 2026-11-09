@@ -9,93 +9,52 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import net.runelite.client.util.ImageUtil;
 
-@AllArgsConstructor
-public enum Emote
+public class Emote
 {
-	AIAIAI("aiaiai", EmoteType.GIF),
-	AWKWARD("awkward", EmoteType.GIF),
-	FUFU("fufu", EmoteType.GIF),
-	GNEAH("gneah", EmoteType.PNG),
-	HUH("huh", EmoteType.PNG),
-	HYPERWANKGE("hyperwankge", EmoteType.GIF),
-	JANITOR("janitor", EmoteType.PNG),
-	KEK("kek", EmoteType.GIF),
-	KISS("kiss", EmoteType.PNG),
-	NOWAY("noway", EmoteType.PNG),
-	PFACE(":p", EmoteType.GIF, new String[]{"pface"}),
-	RLY("rly", EmoteType.GIF),
-	SMILE(":)", EmoteType.GIF, new String[]{"smile"}),
-	TUNE("tune", EmoteType.GIF),
-	ODAWHAT("odawhat", EmoteType.PNG),
-	DAP("dap", EmoteType.PNG),
-	CAP("cap", EmoteType.PNG),
-	CAPPP("cappp", EmoteType.PNG),
-	WHENITREGISTERS("whenitregisters", EmoteType.GIF),
-	WINK("wink", EmoteType.PNG);
+	@Getter private String trigger;
+	@Getter private String[] altTriggers = new String[0];
+	private String file;
+	private String overheadFile;
+	private transient BufferedImage image;
+	private transient BufferedImage overheadImage;
+	private transient int index;
+	private static Emote[] current = new Emote[0];
+	private static Map<String, Emote> emojiMap = new java.util.HashMap<>();
 
-	private enum EmoteType
+	static Emote[] values() { return current; }
+	int ordinal() { return index; }
+	BufferedImage loadImage() { return image; }
+	BufferedImage loadOverheadImage() { return overheadImage; }
+	void prepare(java.nio.file.Path directory) throws java.io.IOException
 	{
-		PNG,
-		GIF
+		image = read(directory, file);
+		overheadImage = overheadFile == null ? image : read(directory, overheadFile);
 	}
-
-	private static final Map<String, Emote> emojiMap;
-
-	@Getter
-	private final String trigger;
-	private final EmoteType emoteType;
-	@Getter
-	private final String[] altTriggers;
-
-	Emote(final String trigger, EmoteType emoteType)
+	private BufferedImage read(java.nio.file.Path directory, String name) throws java.io.IOException
 	{
-		this(trigger, emoteType, new String[]{});
+		BufferedImage result = javax.imageio.ImageIO.read(directory.resolve(name).toFile());
+		if (result == null) throw new java.io.IOException("Invalid emote image: " + name);
+		return toChatIconImage(result);
 	}
-
-	static
+	String[] files() { return overheadFile == null ? new String[]{file} : new String[]{file, overheadFile}; }
+	static void install(Emote[] emotes)
 	{
-		ImmutableMap.Builder<String, Emote> builder = new ImmutableMap.Builder<>();
-
-		for (final Emote emoji : values())
+		Map<String, Emote> mapping = new java.util.HashMap<>();
+		for (int i = 0; i < emotes.length; i++)
 		{
-			builder.put(emoji.trigger, emoji);
-			if (!emoji.trigger.startsWith("oda") && !emoji.trigger.startsWith(":"))
+			Emote emote = emotes[i];
+			emote.index = i;
+			java.util.List<String> triggers = new java.util.ArrayList<>(java.util.Arrays.asList(emote.altTriggers));
+			triggers.add(emote.trigger);
+			for (String trigger : triggers)
 			{
-				builder.put("oda" + emoji.trigger, emoji);
-			}
-			for (final String altTrigger : emoji.altTriggers)
-			{
-				builder.put(altTrigger, emoji);
-				if (!altTrigger.startsWith("oda") && !altTrigger.startsWith(":"))
-				{
-					builder.put("oda" + altTrigger, emoji);
-				}
+				trigger = trigger.toLowerCase(java.util.Locale.ROOT);
+				mapping.put(trigger, emote);
+				if (!trigger.startsWith("oda") && !trigger.startsWith(":")) mapping.put("oda" + trigger, emote);
 			}
 		}
-
-		emojiMap = builder.build();
-	}
-
-	BufferedImage loadImage()
-	{
-		return toChatIconImage(ImageUtil.loadImageResource(getClass(), this.name().toLowerCase() + ".png"));
-	}
-
-	BufferedImage loadOverheadImage()
-	{
-		String path = this.name().toLowerCase() + "_overhead.png";
-		try
-		{
-			if (getClass().getResource(path) != null)
-			{
-				return toChatIconImage(ImageUtil.loadImageResource(getClass(), path));
-			}
-		}
-		catch (Exception e)
-		{
-			// Ignore and fallback to standard image
-		}
-		return loadImage();
+		current = emotes;
+		emojiMap = mapping;
 	}
 
 	static BufferedImage toChatIconImage(BufferedImage image)

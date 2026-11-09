@@ -1,0 +1,128 @@
+{
+  "version": 1,
+  "emotes": [
+    {
+      "trigger": "aiaiai",
+      "file": "aiaiai.png",
+      "altTriggers": [],
+      "overheadFile": "aiaiai_overhead.png"
+    },
+    {
+      "trigger": "awkward",
+      "file": "awkward.png",
+      "altTriggers": [],
+      "overheadFile": "awkward_overhead.png"
+    },
+    {
+      "trigger": "fufu",
+      "file": "fufu.png",
+      "altTriggers": [],
+      "overheadFile": "fufu_overhead.png"
+    },
+    {
+      "trigger": "gneah",
+      "file": "gneah.png",
+      "altTriggers": [],
+      "overheadFile": "gneah_overhead.png"
+    },
+    {
+      "trigger": "huh",
+      "file": "huh.png",
+      "altTriggers": [],
+      "overheadFile": "huh_overhead.png"
+    },
+    {
+      "trigger": "hyperwankge",
+      "file": "hyperwankge.png",
+      "altTriggers": [],
+      "overheadFile": "hyperwankge_overhead.png"
+    },
+    {
+      "trigger": "janitor",
+      "file": "janitor.png",
+      "altTriggers": [],
+      "overheadFile": "janitor_overhead.png"
+    },
+    {
+      "trigger": "kek",
+      "file": "kek.png",
+      "altTriggers": [],
+      "overheadFile": "kek_overhead.png"
+    },
+    {
+      "trigger": "kiss",
+      "file": "kiss.png",
+      "altTriggers": [],
+      "overheadFile": "kiss_overhead.png"
+    },
+    {
+      "trigger": "noway",
+      "file": "noway.png",
+      "altTriggers": [],
+      "overheadFile": "noway_overhead.png"
+    },
+    {
+      "trigger": ":p",
+      "file": "pface.png",
+      "altTriggers": [
+        "pface"
+      ],
+      "overheadFile": "pface_overhead.png"
+    },
+    {
+      "trigger": "rly",
+      "file": "rly.png",
+      "altTriggers": [],
+      "overheadFile": "rly_overhead.png"
+    },
+    {
+      "trigger": ":)",
+      "file": "smile.png",
+      "altTriggers": [
+        "smile"
+      ],
+      "overheadFile": "smile_overhead.png"
+    },
+    {
+      "trigger": "tune",
+      "file": "tune.png",
+      "altTriggers": [],
+      "overheadFile": "tune_overhead.png"
+    },
+    {
+      "trigger": "odawhat",
+      "file": "odawhat.png",
+      "altTriggers": [],
+      "overheadFile": "odawhat_overhead.png"
+    },
+    {
+      "trigger": "dap",
+      "file": "dap.png",
+      "altTriggers": [],
+      "overheadFile": "dap_overhead.png"
+    },
+    {
+      "trigger": "cap",
+      "file": "cap.png",
+      "altTriggers": []
+    },
+    {
+      "trigger": "cappp",
+      "file": "cappp.png",
+      "altTriggers": [],
+      "overheadFile": "cappp_overhead.png"
+    },
+    {
+      "trigger": "whenitregisters",
+      "file": "whenitregisters.png",
+      "altTriggers": [],
+      "overheadFile": "whenitregisters_overhead.png"
+    },
+    {
+      "trigger": "wink",
+      "file": "wink.png",
+      "altTriggers": [],
+      "overheadFile": "wink_overhead.png"
+    }
+  ]
+}

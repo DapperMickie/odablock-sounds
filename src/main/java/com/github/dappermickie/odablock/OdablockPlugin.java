@@ -325,6 +325,7 @@ public class OdablockPlugin extends Plugin
 	@Override
 	protected void shutDown() throws Exception
 	{
+		emoteHandler.shutDown();
 		tfaChestLight.reset();
 		toaChestLight.reset();
 		levelUp.clear();
