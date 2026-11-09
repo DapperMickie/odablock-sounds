@@ -1,7 +1,7 @@
 package com.github.dappermickie.odablock.ui;
 
-import com.github.dappermickie.odablock.overrides.SoundOverrideAction;
 import com.github.dappermickie.odablock.overrides.SoundOverrideService;
+import com.github.dappermickie.odablock.overrides.SoundPools;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -30,7 +30,7 @@ class OverridesListView extends JPanel
 {
 	private final SoundOverrideService soundOverrideService;
 	private final Runnable onAddOverrideRequested;
-	private final Consumer<SoundOverrideAction> onEditOverrideRequested;
+	private final Consumer<String> onEditOverrideRequested;
 
 	private final VerticalScrollPane scrollPane;
 	private final VerticalScrollPane.ScrollableContainer rowsContainer;
@@ -41,7 +41,7 @@ class OverridesListView extends JPanel
 	OverridesListView(
 		SoundOverrideService soundOverrideService,
 		Runnable onAddOverrideRequested,
-		Consumer<SoundOverrideAction> onEditOverrideRequested)
+		Consumer<String> onEditOverrideRequested)
 	{
 		this.soundOverrideService = soundOverrideService;
 		this.onAddOverrideRequested = onAddOverrideRequested;
@@ -136,13 +136,13 @@ class OverridesListView extends JPanel
 
 		SwingUtil.fastRemoveAll(rowsContainer);
 
-		Map<SoundOverrideAction, Integer> activeOverrides = new LinkedHashMap<>();
-		for (SoundOverrideAction action : SoundOverrideAction.values())
+		Map<String, Integer> activeOverrides = new LinkedHashMap<>();
+		for (String poolDirectory : SoundPools.allDirectories())
 		{
-			int count = soundOverrideService.getOverrideFileNames(action).size();
+			int count = soundOverrideService.getOverrideFileNames(poolDirectory).size();
 			if (count > 0)
 			{
-				activeOverrides.put(action, count);
+				activeOverrides.put(poolDirectory, count);
 			}
 		}
 
@@ -156,7 +156,7 @@ class OverridesListView extends JPanel
 		}
 		else
 		{
-			for (Map.Entry<SoundOverrideAction, Integer> entry : activeOverrides.entrySet())
+			for (Map.Entry<String, Integer> entry : activeOverrides.entrySet())
 			{
 				OverrideRow row = new OverrideRow(
 					entry.getKey(),
@@ -183,15 +183,13 @@ class OverridesListView extends JPanel
 		}
 		else
 		{
-			// Restore scroll AFTER layout has settled so the scrollbar's max
-			// has been recomputed against the new contents.
 			SwingUtilities.invokeLater(() -> scrollPane.setScrollValue(previousScroll));
 		}
 	}
 
-	private void deleteOverride(SoundOverrideAction action)
+	private void deleteOverride(String poolDirectory)
 	{
-		soundOverrideService.clearOverrideFileNames(action);
+		soundOverrideService.clearOverrideFileNames(poolDirectory);
 		refresh();
 	}
 

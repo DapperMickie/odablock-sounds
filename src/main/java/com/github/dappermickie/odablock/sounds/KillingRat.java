@@ -1,10 +1,8 @@
 package com.github.dappermickie.odablock.sounds;
 
 import com.github.dappermickie.odablock.OdablockConfig;
-import com.github.dappermickie.odablock.RandomSoundUtility;
 import com.github.dappermickie.odablock.Sound;
 import com.github.dappermickie.odablock.SoundEngine;
-import com.github.dappermickie.odablock.overrides.SoundOverrideAction;
 import java.util.Random;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Actor;
@@ -74,7 +72,7 @@ public class KillingRat extends TimedSoundBase
 			return false;
 		}
 
-		if (chatMessage.getName() != "")
+		if (!"".equals(chatMessage.getName()))
 		{
 			return false;
 		}
@@ -91,7 +89,7 @@ public class KillingRat extends TimedSoundBase
 		}
 
 		setLastPlayedTickTick(currentTick);
-		soundEngine.playClip(Sound.KILLING_RAT_OR_SCURRIUS_1, SoundOverrideAction.KILLING_RAT, executor);
+		soundEngine.playClip(Sound.KILLING_RAT_OR_SCURRIUS_1, executor);
 		return true;
 	}
 
@@ -131,7 +129,7 @@ public class KillingRat extends TimedSoundBase
 		}
 
 		setLastPlayedTickTick(currentTick);
-		soundEngine.playClip(Sound.KILLING_RAT_OR_SCURRIUS_1, SoundOverrideAction.KILLING_RAT, executor);
+		soundEngine.playClip(Sound.KILLING_RAT_OR_SCURRIUS_1, executor);
 	}
 
 

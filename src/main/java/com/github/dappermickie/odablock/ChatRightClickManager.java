@@ -1,84 +1,64 @@
 package com.github.dappermickie.odablock;
 
-import com.github.dappermickie.odablock.notifications.Notification;
-import com.google.gson.Gson;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
-import net.runelite.api.ScriptEvent;
-import net.runelite.api.events.GameTick;
-import net.runelite.api.widgets.ComponentID;
-import net.runelite.api.widgets.JavaScriptCallback;
+import net.runelite.api.MenuAction;
+import net.runelite.api.MenuEntry;
+import net.runelite.api.events.MenuOpened;
+import net.runelite.api.gameval.InterfaceID;
 import net.runelite.api.widgets.Widget;
-import net.runelite.client.callback.ClientThread;
 import net.runelite.client.util.LinkBrowser;
 import net.runelite.client.util.Text;
-import okhttp3.OkHttpClient;
 
-@Slf4j
 @Singleton
 public class ChatRightClickManager
 {
-	private final Map<String, RightClickAction> rightClickable = new HashMap<>();
+	private final Map<String, RightClickAction> rightClickable = new LinkedHashMap<>();
 
 	@Inject
 	private Client client;
 
-	@Inject
-	private OkHttpClient okHttpClient;
-
-	@Inject
-	private Gson gson;
-
-	@Inject
-	private ClientThread clientThread;
-
-	public void onGameTick(GameTick event)
+	public void onMenuOpened(MenuOpened event)
 	{
-		Widget chatWidget = client.getWidget(ComponentID.CHATBOX_MESSAGE_LINES);
-		if (chatWidget != null)
+		for (MenuEntry entry : event.getMenuEntries())
 		{
-			for (Widget w : chatWidget.getDynamicChildren())
+			if (entry.getParam1() >>> 16 != InterfaceID.CHATBOX)
 			{
-				String untaggedText = Text.standardize(w.getText());
-
-				if (rightClickable.containsKey(untaggedText))
-				{
-					RightClickAction rightClickAction = rightClickable.get(untaggedText);
-					clientThread.invokeLater(() -> {
-						w.setAction(5, rightClickAction.getAction());
-						w.setOnOpListener((JavaScriptCallback) (ScriptEvent ev) -> {
-							openLink(rightClickAction);
-						});
-						w.setHasListener(true);
-						w.setNoClickThrough(false);
-						w.revalidate();
-					});
-				}
-				else
-				{
-					clientThread.invokeLater(() -> {
-						w.setHasListener(false);
-						w.setNoClickThrough(false);
-						w.revalidate();
-					});
-				}
+				continue;
+			}
+			Widget row = entry.getWidget();
+			if (row == null || row.getText() == null)
+			{
+				continue;
+			}
+			RightClickAction action = rightClickable.get(Text.standardize(row.getText()));
+			if (action != null)
+			{
+				// Add only our context-menu entry; preserve native and other plugins' listeners.
+				client.createMenuEntry(-1)
+					.setOption(action.getAction())
+					.setTarget("")
+					.setType(MenuAction.RUNELITE)
+					.onClick(clicked -> LinkBrowser.browse(action.getLink()));
+				return;
 			}
 		}
 	}
 
-	public void putInMap(String message, RightClickAction rightClickAction)
+	public void putInMap(String message, RightClickAction action)
 	{
-		String key = Text.standardize(message);
-		rightClickable.put(key, rightClickAction);
+		rightClickable.put(Text.standardize(message), action);
+		if (rightClickable.size() > 128)
+		{
+			rightClickable.remove(rightClickable.keySet().iterator().next());
+		}
 	}
 
-	private void openLink(RightClickAction rightClickAction)
+	public void clear()
 	{
-		LinkBrowser.browse(rightClickAction.getLink());
-		//log.info("Opened a link to Odablocks notification!");
+		rightClickable.clear();
 	}
 }

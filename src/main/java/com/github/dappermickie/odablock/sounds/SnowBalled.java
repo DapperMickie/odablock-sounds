@@ -5,12 +5,8 @@ import static com.github.dappermickie.odablock.OdablockPlugin.ODABLOCK;
 import com.github.dappermickie.odablock.SnowballUserManager;
 import com.github.dappermickie.odablock.Sound;
 import com.github.dappermickie.odablock.SoundEngine;
-import com.github.dappermickie.odablock.overrides.SoundOverrideAction;
-import java.time.Duration;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Random;
-import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -58,7 +54,8 @@ public class SnowBalled
 		}
 
 		int currentTick = client.getTickCount();
-		if (currentTick - lastSnowballTriggerTick < 50) // 30s cool down
+		if (lastSnowballTriggerTick >= 0 && currentTick >= lastSnowballTriggerTick
+			&& currentTick - lastSnowballTriggerTick < 50) // 30s cool down
 		{
 			return;
 		}
@@ -86,14 +83,15 @@ public class SnowBalled
 			WorldPoint projectileWP = WorldPoint.fromLocal(client, projectile.getX1(), projectile.getY1(), playerWp.getPlane()); // we don't care about plane
 
 			// check snowball is *roughly* from the players tile, while allowing for drive-by/moving while the projectile spawns
-			if (playerWp.distanceTo2D(projectileWP) <= 2)
+			if (projectileWP != null && playerWp.distanceTo2D(projectileWP) <= 2)
 			{
 				lastSnowballTriggerTick = currentTick;
-				soundEngine.playClip(Sound.SNOWBALL_1, SoundOverrideAction.SNOWBALLED, executor);
+				soundEngine.playClip(Sound.SNOWBALL_1, executor);
 				if (config.showChatMessages())
 				{
 					client.addChatMessage(ChatMessageType.PUBLICCHAT, ODABLOCK, player.getName() + " already kicked you!", null);
 				}
+				return;
 			}
 		}
 	}

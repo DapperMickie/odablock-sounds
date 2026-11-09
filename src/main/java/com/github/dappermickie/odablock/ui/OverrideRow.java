@@ -1,6 +1,6 @@
 package com.github.dappermickie.odablock.ui;
 
-import com.github.dappermickie.odablock.overrides.SoundOverrideAction;
+import com.github.dappermickie.odablock.overrides.SoundPools;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Cursor;
@@ -24,11 +24,13 @@ class OverrideRow extends JPanel
 	private static final Color ACCENT = new Color(95, 175, 95);
 
 	OverrideRow(
-		SoundOverrideAction action,
+		String poolDirectory,
 		int selectedCount,
-		Consumer<SoundOverrideAction> onEdit,
-		Consumer<SoundOverrideAction> onDelete)
+		Consumer<String> onEdit,
+		Consumer<String> onDelete)
 	{
+		String displayName = SoundPools.getDisplayName(poolDirectory);
+
 		setLayout(new BorderLayout(8, 0));
 		setBackground(ColorScheme.DARKER_GRAY_COLOR);
 		setBorder(new CompoundBorder(
@@ -36,7 +38,7 @@ class OverrideRow extends JPanel
 			new EmptyBorder(8, 10, 8, 6)
 		));
 
-		JLabel nameLabel = new JLabel(action.getDisplayName());
+		JLabel nameLabel = new JLabel(displayName);
 		nameLabel.setFont(FontManager.getRunescapeBoldFont());
 		nameLabel.setForeground(Color.WHITE);
 
@@ -61,7 +63,7 @@ class OverrideRow extends JPanel
 		deleteButton.addActionListener(event -> {
 			if (onDelete != null)
 			{
-				onDelete.accept(action);
+				onDelete.accept(poolDirectory);
 			}
 		});
 
@@ -69,7 +71,7 @@ class OverrideRow extends JPanel
 		add(deleteButton, BorderLayout.EAST);
 
 		setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-		setToolTipText("Click to edit sounds for " + action.getDisplayName());
+		setToolTipText("Click to edit sounds for " + displayName);
 
 		final Color hoverBackground = ColorScheme.DARK_GRAY_HOVER_COLOR;
 		final Color normalBackground = ColorScheme.DARKER_GRAY_COLOR;
@@ -102,7 +104,7 @@ class OverrideRow extends JPanel
 				}
 				if (onEdit != null)
 				{
-					onEdit.accept(action);
+					onEdit.accept(poolDirectory);
 				}
 			}
 		});

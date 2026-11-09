@@ -1,32 +1,24 @@
 package com.github.dappermickie.odablock;
 
-import java.io.FileWriter;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.RuneLite;
-import net.runelite.client.util.Text;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Collections;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -34,12 +26,18 @@ public abstract class SoundFileManager
 {
 
 	private static final File DOWNLOAD_DIR = new File(RuneLite.RUNELITE_DIR.getPath() + File.separator + "odablock-sounds");
+	public static final String CUSTOM_DIRECTORY = "custom";
+	private static final File CUSTOM_DIR = new File(DOWNLOAD_DIR, CUSTOM_DIRECTORY);
 	private static final String DELETE_WARNING_FILENAME = "EXTRA_FILES_WILL_BE_DELETED_BUT_FOLDERS_WILL_REMAIN";
 	private static final String SOUNDVERSION_FILENAME = "SOUNDVERSION";
 	private static final File DELETE_WARNING_FILE = new File(DOWNLOAD_DIR, DELETE_WARNING_FILENAME);
-	private static final HttpUrl RAW_GITHUB = HttpUrl.parse("https://raw.githubusercontent.com/dappermickie/odablock-sounds/sounds-v2");
+	private static final HttpUrl RAW_GITHUB = HttpUrl.parse("https://raw.githubusercontent.com/dappermickie/odablock-sounds/sounds-v3");
 
-	private static boolean isUpdating = false;
+	static final List<String> BARROWS_FACE_FILES = List.of(
+		"oda_face_1.png", "oda_face_2.png", "oda_face_3.png", "oda_face_5.png",
+		"oda_face_6.png", "oda_face_7.png", "torvesta_face.png");
+
+	private static volatile boolean isUpdating = false;
 
 	private static final Map<String, String[]> soundDirectoryMap = new ConcurrentHashMap<>();
 
@@ -50,6 +48,10 @@ public abstract class SoundFileManager
 		{
 			DOWNLOAD_DIR.mkdirs();
 		}
+		if (!CUSTOM_DIR.exists())
+		{
+			CUSTOM_DIR.mkdirs();
+		}
 		try
 		{
 			DELETE_WARNING_FILE.createNewFile();
@@ -59,192 +61,165 @@ public abstract class SoundFileManager
 		}
 	}
 
-	@SuppressWarnings("ResultOfMethodCallIgnored")
-	public static void ensureSoundDirectoryExists(File soundDirectory)
+	public static synchronized void downloadAllMissingSounds(final OkHttpClient okHttpClient)
 	{
-		if (!soundDirectory.exists())
-		{
-			soundDirectory.mkdirs();
-		}
-		File customDirectory = new File(soundDirectory, "custom");
-		if (!customDirectory.exists())
-		{
-			customDirectory.mkdirs();
-		}
-		try
-		{
-			soundDirectory.createNewFile();
-		}
-		catch (IOException ignored)
-		{
-		}
+		ensureDownloadDirectoryExists();
+		downloadAllMissingSounds(okHttpClient, DOWNLOAD_DIR.toPath());
 	}
 
-	public static void downloadAllMissingSounds(final OkHttpClient okHttpClient)
+	static void downloadAllMissingSounds(OkHttpClient okHttpClient, Path directory)
 	{
-		// Get set of existing files in our dir - existing sounds will be skipped, unexpected files (not dirs, some sounds depending on config) will be deleted
-		assert RAW_GITHUB != null;
-		HttpUrl versionUrl = RAW_GITHUB.newBuilder().addPathSegment(SOUNDVERSION_FILENAME).build();
-		int latestVersion = getLatestVersion(okHttpClient, versionUrl);
-		if (latestVersion == -1)
+		int latestVersion = getLatestVersion(okHttpClient, RAW_GITHUB.newBuilder()
+			.addPathSegment(SOUNDVERSION_FILENAME).build());
+		if (latestVersion < 0)
 		{
 			return;
 		}
 
-		int currentVersion = getCurrentVersion();
-
-		if (latestVersion == currentVersion)
-		{
-			isUpdating = true;
-			downloadMissingSounds(okHttpClient);
-			isUpdating = false;
-			return;
-		}
+		boolean refresh = latestVersion != getCurrentVersion(directory);
 		isUpdating = true;
-		writeLatestVersion(latestVersion);
-
-		for (String filename : getFilesPresent(DOWNLOAD_DIR))
-		{
-			File toDelete = new File(DOWNLOAD_DIR, filename);
-			//noinspection ResultOfMethodCallIgnored
-			toDelete.delete();
-			log.warn("Odablock plugin deleted " + filename);
-		}
-
-		List<String> cleanedDirectories = new ArrayList<>();
-
-		// Download any sounds that are not yet present but desired
-		for (Sound sound : Sound.values())
-		{
-			String soundDirectory = sound.getDirectory();
-			File soundDirectoryFile = new File(DOWNLOAD_DIR, soundDirectory);
-
-			ensureSoundDirectoryExists(soundDirectoryFile);
-
-			if (!cleanedDirectories.contains(soundDirectory))
-			{
-				Set<String> filesPresent = getFilesPresent(soundDirectoryFile);
-
-				for (String filename : filesPresent)
-				{
-					File toDelete = new File(soundDirectoryFile, filename);
-					//noinspection ResultOfMethodCallIgnored
-					toDelete.delete();
-					log.warn("Odablock plugin deleted " + filename);
-				}
-
-				cleanedDirectories.add(soundDirectory);
-			}
-
-			// End early if the sound couldn't be downloaded
-			if (hasNotDownloadedSound(sound, okHttpClient))
-			{
-				return;
-			}
-		}
-
-		isUpdating = false;
-	}
-
-	private static int getCurrentVersion()
-	{
-		int currentVersion = -1;
 		try
 		{
-			currentVersion = getSoundVersion();
+			boolean complete = true;
+			for (Sound sound : Sound.values())
+			{
+				Path destination = directory.resolve(sound.getDirectory()).resolve(sound.getResourceName());
+				if (refresh || !isValidWav(destination))
+				{
+					// One unavailable addition must not prevent the rest of the catalog downloading.
+					complete &= downloadSound(sound, destination, okHttpClient);
+				}
+			}
+			if (complete)
+			{
+				writeLatestVersion(directory, latestVersion);
+			}
 		}
-		catch (IOException e)
+		finally
 		{
-			// No current version available
-			var soundVersionFile = new File(DOWNLOAD_DIR, SOUNDVERSION_FILENAME);
-			try
-			{
-				//noinspection ResultOfMethodCallIgnored
-				soundVersionFile.createNewFile();
-			}
-			catch (IOException e2)
-			{
-				log.error("Couldn't create soundversion file");
-			}
+			clearAllSoundDirectoryCaches();
+			isUpdating = false;
 		}
-		return currentVersion;
+	}
+
+	private static int getCurrentVersion(Path directory)
+	{
+		try
+		{
+			return Integer.parseInt(Files.readString(directory.resolve(SOUNDVERSION_FILENAME)).trim());
+		}
+		catch (IOException | NumberFormatException e)
+		{
+			return -1;
+		}
 	}
 
 	private static int getLatestVersion(OkHttpClient okHttpClient, HttpUrl versionUrl)
 	{
-		int latestVersion = -1;
 		try (Response res = okHttpClient.newCall(new Request.Builder().url(versionUrl).build()).execute())
 		{
-			if (res.body() != null)
+			if (res.isSuccessful() && res.body() != null)
 			{
-				latestVersion = Integer.parseInt(Text.standardize(res.body().string()));
+				return Integer.parseInt(res.body().string().trim());
 			}
+		}
+		catch (IOException | NumberFormatException e)
+		{
+			log.warn("Odablock Plugin could not download sound version", e);
+		}
+		return -1;
+	}
+
+	private static boolean downloadSound(Sound sound, Path destination, OkHttpClient okHttpClient)
+	{
+		return downloadAsset(sound.getDirectory(), sound.getResourceName(), destination, okHttpClient, false);
+	}
+
+	public static void downloadMissingBarrowsFaces(OkHttpClient okHttpClient)
+	{
+		downloadMissingBarrowsFaces(okHttpClient, DOWNLOAD_DIR.toPath());
+	}
+
+	static void downloadMissingBarrowsFaces(OkHttpClient okHttpClient, Path directory)
+	{
+		for (String name : BARROWS_FACE_FILES)
+		{
+			Path destination = directory.resolve("odafaces").resolve(name);
+			if (!isValidImage(destination))
+			{
+				downloadAsset("odafaces", name, destination, okHttpClient, true);
+			}
+		}
+	}
+
+	private static boolean isValidImage(Path path)
+	{
+		try
+		{
+			return javax.imageio.ImageIO.read(path.toFile()) != null;
 		}
 		catch (IOException e)
 		{
-			log.error("Odablock Plugin could not download sound version", e);
+			return false;
 		}
-		return latestVersion;
 	}
 
-	private static boolean hasNotDownloadedSound(Sound sound, OkHttpClient okHttpClient)
+	private static boolean downloadAsset(String directory, String name, Path destination,
+		OkHttpClient okHttpClient, boolean image)
 	{
-		String soundDirectory = sound.getDirectory();
-		String soundResourceName = sound.getResourceName();
-		File soundDirectoryFile = new File(DOWNLOAD_DIR.getPath(), sound.getDirectory());
-		assert RAW_GITHUB != null;
-		HttpUrl soundUrl = RAW_GITHUB.newBuilder().addPathSegment(soundDirectory).addPathSegment(soundResourceName).build();
-		Path outputPath = Paths.get(soundDirectoryFile.getPath(), soundResourceName);
-		ensureSoundDirectoryExists(soundDirectoryFile);
+		HttpUrl soundUrl = RAW_GITHUB.newBuilder().addPathSegment(directory).addPathSegment(name).build();
+		Path temporary = null;
 		try (Response res = okHttpClient.newCall(new Request.Builder().url(soundUrl).build()).execute())
 		{
-			if (res.body() != null)
+			if (!res.isSuccessful() || res.body() == null)
 			{
-				Files.copy(new BufferedInputStream(res.body().byteStream()), outputPath, StandardCopyOption.REPLACE_EXISTING);
-				log.warn("Odablock plugin downloaded " + sound.getResourceName());
+				log.warn("Could not download {} (HTTP {})", name, res.code());
 				return false;
 			}
+			Files.createDirectories(destination.getParent());
+			temporary = Files.createTempFile(destination.getParent(), "download-", ".tmp");
+			Files.copy(res.body().byteStream(), temporary, StandardCopyOption.REPLACE_EXISTING);
+			if (image ? !isValidImage(temporary) : !isValidWav(temporary))
+			{
+				log.warn("Downloaded file is not a valid {}: {}", image ? "image" : "WAV", name);
+				return false;
+			}
+			// Keep working audio intact until its replacement has downloaded successfully.
+			Files.move(temporary, destination, StandardCopyOption.REPLACE_EXISTING);
 			return true;
 		}
 		catch (IOException e)
 		{
-			log.error("Odablock Plugin could not download sounds", e);
-			isUpdating = false;
-			return true;
+			log.warn("Odablock Plugin could not download {}", name, e);
+			return false;
 		}
-	}
-
-	private static void downloadMissingSounds(OkHttpClient okHttpClient)
-	{
-		for (Sound sound : Sound.values())
+		finally
 		{
-			File soundFile = Paths.get(DOWNLOAD_DIR.getPath(), sound.getDirectory(), sound.getResourceName()).toFile();
-			if (soundFile.exists())
+			if (temporary != null)
 			{
-				continue;
-			}
-			// Download sound and if a sound couldn't get downloaded, return early.
-			if (hasNotDownloadedSound(sound, okHttpClient))
-			{
-				return;
+				try
+				{
+					Files.deleteIfExists(temporary);
+				}
+				catch (IOException e)
+				{
+					log.debug("Could not remove temporary sound download", e);
+				}
 			}
 		}
 	}
 
-	private static Set<String> getFilesPresent(File directory)
+	private static boolean isValidWav(Path path)
 	{
-		File[] downloadDirFiles = directory.listFiles();
-		if (downloadDirFiles == null || downloadDirFiles.length == 0)
+		try
 		{
-			return new HashSet<>();
+			return javax.sound.sampled.AudioFileFormat.Type.WAVE.equals(
+				javax.sound.sampled.AudioSystem.getAudioFileFormat(path.toFile()).getType());
 		}
-
-		return Arrays.stream(downloadDirFiles)
-			.filter(file -> !file.isDirectory())
-			.map(File::getName)
-			.filter(filename -> !DELETE_WARNING_FILENAME.equals(filename))
-			.filter(filename -> !SOUNDVERSION_FILENAME.equals(filename))
-			.collect(Collectors.toSet());
+		catch (IOException | javax.sound.sampled.UnsupportedAudioFileException e)
+		{
+			return false;
+		}
 	}
 
 	public static File getSoundStream(Sound sound) throws FileNotFoundException
@@ -327,17 +302,21 @@ public abstract class SoundFileManager
 			soundDirectoryMap.remove(directory);
 		}
 
-		return soundDirectoryMap.computeIfAbsent(directory, SoundFileManager::loadSoundFilesFromDisk);
+		String[] cached = soundDirectoryMap.computeIfAbsent(directory, key -> {
+			String[] files = loadSoundFilesFromDisk(key);
+			return files.length == 0 ? null : files;
+		});
+		return cached == null ? new String[0] : cached;
 	}
 
 	private static String[] loadSoundFilesFromDisk(String directory)
 	{
 		File soundDirectoryPath = Paths.get(DOWNLOAD_DIR.getPath(), directory).toFile();
 		File customSoundDirectoryPath = Paths.get(soundDirectoryPath.getPath(), "custom").toFile();
-		File[] files = customSoundDirectoryPath.listFiles();
+		File[] files = customSoundDirectoryPath.listFiles(SoundFileManager::isSoundFile);
 		if (files == null || files.length == 0)
 		{
-			files = soundDirectoryPath.listFiles();
+			files = soundDirectoryPath.listFiles(SoundFileManager::isSoundFile);
 		}
 
 		String[] soundFileArray = files == null
@@ -351,11 +330,16 @@ public abstract class SoundFileManager
 		return soundFileArray;
 	}
 
+	private static boolean isSoundFile(File file)
+	{
+		return file.isFile() && file.getName().toLowerCase(java.util.Locale.ROOT).endsWith(".wav");
+	}
+
 	public static int getSoundVersion() throws IOException
 	{
 		File soundVersionFile = new File(DOWNLOAD_DIR, SOUNDVERSION_FILENAME);
 		String soundVersionContent = Files.readString(soundVersionFile.toPath());
-		return Integer.parseInt(soundVersionContent);
+		return Integer.parseInt(soundVersionContent.trim());
 	}
 
 	public static boolean getIsUpdating()
@@ -363,18 +347,15 @@ public abstract class SoundFileManager
 		return isUpdating;
 	}
 
-	private static void writeLatestVersion(int version)
+	private static void writeLatestVersion(Path directory, int version)
 	{
-		var soundVersionFile = new File(DOWNLOAD_DIR, SOUNDVERSION_FILENAME);
 		try
 		{
-			FileWriter myWriter = new FileWriter(soundVersionFile);
-			myWriter.write(String.valueOf(version));
-			myWriter.close();
+			Files.writeString(directory.resolve(SOUNDVERSION_FILENAME), Integer.toString(version));
 		}
 		catch (IOException e)
 		{
-			log.error("Couldn't write latest soundversion");
+			log.warn("Couldn't write latest sound version", e);
 		}
 	}
 }

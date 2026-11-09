@@ -4,7 +4,6 @@ import com.github.dappermickie.odablock.OdablockConfig;
 import static com.github.dappermickie.odablock.OdablockPlugin.ODABLOCK;
 import com.github.dappermickie.odablock.Sound;
 import com.github.dappermickie.odablock.SoundEngine;
-import com.github.dappermickie.odablock.overrides.SoundOverrideAction;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.regex.Pattern;
@@ -18,6 +17,7 @@ import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.Varbits;
 import net.runelite.api.events.ChatMessage;
+import net.runelite.api.events.GameTick;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.client.callback.ClientThread;
@@ -26,6 +26,7 @@ import net.runelite.client.chat.ChatMessageBuilder;
 import net.runelite.client.chat.ChatMessageManager;
 import net.runelite.client.chat.QueuedMessage;
 import net.runelite.client.events.ConfigChanged;
+import net.runelite.client.util.Text;
 
 @Singleton
 @Slf4j
@@ -56,6 +57,8 @@ public class CollectionLog
 	private Pet pet;
 	private int lastColLogSettingWarning = -1;
 	private boolean gameStateLoggedIn = false;
+	private boolean pendingColLog = false;
+	private String colLogItem = null;
 
 	private static final Set<Integer> badCollectionLogNotificationSettingValues = Set.of(0, 2);
 
@@ -63,23 +66,48 @@ public class CollectionLog
 
 	public boolean onChatMessage(ChatMessage chatMessage)
 	{
-		if (!config.announceCollectionLog() || !COLLECTION_LOG_ITEM_REGEX.matcher(chatMessage.getMessage()).matches())
+		if (!COLLECTION_LOG_ITEM_REGEX.matcher(chatMessage.getMessage()).matches())
 		{
 			return false;
 		}
 
-		int currentTick = client.getTickCount();
-		if (currentTick - pet.getReceivedPetTick() <= 10)
-		{
-			return false;
-		}
+		String message = chatMessage.getMessage();
+		String item = Text.removeTags(message).substring("New item added to your collection log: ".length()).trim();
 
-		if (config.showChatMessages())
-		{
-			client.addChatMessage(ChatMessageType.PUBLICCHAT, ODABLOCK, "Collection log slot: completed.", null);
-		}
-		soundEngine.playClip(Sound.COLLECTION_LOG_SLOT, SoundOverrideAction.COLLECTION_LOG, executor);
+		pendingColLog = true;
+		colLogItem = item;
 		return true;
+	}
+
+	public void onGameTick(GameTick event)
+	{
+		if (pendingColLog)
+		{
+			if (pet.isPendingPetReceived())
+			{
+				if ("Heron".equals(colLogItem))
+				{
+					if (config.receivedPet())
+					{
+						soundEngine.playClip(Sound.THE_CRANE, executor);
+						pet.setHeronReceived();
+					}
+				}
+			}
+			else
+			{
+				if (config.announceCollectionLog())
+				{
+					if (config.showChatMessages())
+					{
+						client.addChatMessage(ChatMessageType.PUBLICCHAT, ODABLOCK, "Collection log slot: completed.", null);
+					}
+					soundEngine.playClip(Sound.COLLECTION_LOG_SLOT, executor);
+				}
+			}
+			pendingColLog = false;
+			colLogItem = null;
+		}
 	}
 
 	private void checkAndWarnForCollectionLogNotificationSetting(int newVarbitValue)
@@ -99,7 +127,7 @@ public class CollectionLog
 			if (lastColLogSettingWarning == -1 || client.getTickCount() - lastColLogSettingWarning > 16)
 			{
 				lastColLogSettingWarning = client.getTickCount();
-				sendHighlightedMessage("Please enable \"Collection log - New addition notification\" in your game settings for C Engineer to know when to announce it! (The chat message one, pop-up doesn't matter)");
+				sendHighlightedMessage("Please enable \"Collection log - New addition notification\" in your game settings for Odablock to know when to announce it! (The chat message one, pop-up doesn't matter)");
 			}
 		}
 	}
@@ -116,6 +144,12 @@ public class CollectionLog
 	public void onGameStateChanged(GameStateChanged event)
 	{
 		gameStateLoggedIn = event.getGameState() == GameState.LOGGED_IN;
+		if (event.getGameState() == GameState.LOGIN_SCREEN || event.getGameState() == GameState.HOPPING
+			|| event.getGameState() == GameState.LOGGING_IN)
+		{
+			pendingColLog = false;
+			colLogItem = null;
+		}
 	}
 
 	public void setlastColLogSettingWarning()

@@ -3,17 +3,19 @@ package com.github.dappermickie.odablock.sounds;
 import com.github.dappermickie.odablock.OdablockConfig;
 import com.github.dappermickie.odablock.Sound;
 import com.github.dappermickie.odablock.SoundEngine;
-import com.github.dappermickie.odablock.overrides.SoundOverrideAction;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
+import net.runelite.api.GameState;
+import net.runelite.api.Player;
+import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.events.GameTick;
+import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.WallObject;
 import net.runelite.api.events.WallObjectSpawned;
 
 @Singleton
-@Slf4j
 public class ToaChestLight
 {
 	@Inject
@@ -28,61 +30,59 @@ public class ToaChestLight
 	@Inject
 	private ScheduledExecutorService executor;
 
-	private static final int VARBIT_VALUE_CHEST_KEY = 2;
+	// Tomb template region, also identified by the ToA Plugin Hub plugin's RaidRoom.
+	private static final int LOOT_REGION = 14672;
 	private static final int VARBIT_ID_SARCOPHAGUS = 14373;
 	private static final int WALL_OBJECT_ID_SARCOPHAGUS = 46221;
 
-	private static final int[] VARBIT_MULTILOC_IDS_CHEST = new int[]{
-		14356, 14357, 14358, 14359, 14360, 14370, 14371, 14372
-	};
-
-	private boolean sarcophagusIsPurple;
-	private boolean purpleIsMine = true;
+	private boolean rewardHandled;
 
 	public void onWallObjectSpawned(final WallObjectSpawned event)
 	{
 		final WallObject wallObject = event.getWallObject();
-
-		if ((!config.toaPurpleChest() && !config.toaWhiteChest()) || wallObject.getId() != WALL_OBJECT_ID_SARCOPHAGUS)
+		if (wallObject.getId() != WALL_OBJECT_ID_SARCOPHAGUS || rewardHandled)
 		{
 			return;
 		}
 
-		parseVarbits();
-
-		if (sarcophagusIsPurple)
+		// Spawn events can repeat for the same chest or during scene rebuilds.
+		// Mark before queuing audio so only one random clip is requested per reward.
+		rewardHandled = true;
+		boolean purple = client.getVarbitValue(VARBIT_ID_SARCOPHAGUS) % 2 != 0;
+		if (purple)
 		{
 			if (config.toaPurpleChest())
 			{
-				// TODO: Maybe change the sound if it's not your purple?
-				if (purpleIsMine)
-				{
-					soundEngine.playClip(Sound.GETTING_PURPLE_1, SoundOverrideAction.TOA_PURPLE_CHEST, executor);
-				}
-				else
-				{
-					soundEngine.playClip(Sound.GETTING_PURPLE_1, SoundOverrideAction.TOA_PURPLE_CHEST, executor);
-				}
+				soundEngine.playClip(Sound.GETTING_PURPLE_1, executor);
 			}
 		}
 		else if (config.toaWhiteChest())
 		{
-			soundEngine.playClip(Sound.WHITE_LIGHT_AFTER_RAID, SoundOverrideAction.TOA_WHITE_CHEST, executor);
+			soundEngine.playClip(Sound.WHITE_LIGHT_AFTER_RAID, executor);
 		}
 	}
 
-	private void parseVarbits()
+	public void onGameTick(GameTick event)
 	{
-		sarcophagusIsPurple = client.getVarbitValue(VARBIT_ID_SARCOPHAGUS) % 2 != 0;
-		purpleIsMine = true;
-
-		for (final int varbitId : VARBIT_MULTILOC_IDS_CHEST)
+		Player player = client.getLocalPlayer();
+		if (client.getGameState() == GameState.LOGGED_IN && player != null && player.getLocalLocation() != null
+			&& WorldPoint.fromLocalInstance(client, player.getLocalLocation()).getRegionID() != LOOT_REGION)
 		{
-			if (client.getVarbitValue(varbitId) == VARBIT_VALUE_CHEST_KEY)
-			{
-				purpleIsMine = false;
-				break;
-			}
+			reset();
 		}
+	}
+
+	public void onGameStateChanged(GameStateChanged event)
+	{
+		if (event.getGameState() == GameState.LOGIN_SCREEN || event.getGameState() == GameState.HOPPING)
+		{
+			reset();
+		}
+		// Preserve the guard across LOADING and connection recovery in the same room.
+	}
+
+	public void reset()
+	{
+		rewardHandled = false;
 	}
 }

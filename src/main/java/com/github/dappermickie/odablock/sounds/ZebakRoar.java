@@ -3,8 +3,6 @@ package com.github.dappermickie.odablock.sounds;
 import com.github.dappermickie.odablock.OdablockConfig;
 import com.github.dappermickie.odablock.Sound;
 import com.github.dappermickie.odablock.SoundEngine;
-import com.github.dappermickie.odablock.SoundIds;
-import com.github.dappermickie.odablock.overrides.SoundOverrideAction;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -45,7 +43,7 @@ public class ZebakRoar extends TimedSoundBase
 				if (canPlaySound(currentTick))
 				{
 					setLastPlayedTickTick(currentTick);
-					soundEngine.playClip(Sound.ZEBAK_ROAR, SoundOverrideAction.ZEBAK_ROAR, executor);
+					soundEngine.playClip(Sound.ZEBAK_ROAR, executor);
 				}
 			}
 		}

@@ -11,14 +11,22 @@ import com.github.dappermickie.odablock.sounds.AgsSpec;
 import com.github.dappermickie.odablock.sounds.CollectionLog;
 import com.github.dappermickie.odablock.sounds.CombatAchievements;
 import com.github.dappermickie.odablock.sounds.CoxSounds;
+import com.github.dappermickie.odablock.sounds.CryptSound;
+import com.github.dappermickie.odablock.sounds.ClientDisconnectSound;
+import com.github.dappermickie.odablock.sounds.CustomBarrowsFaces;
+import com.github.dappermickie.odablock.sounds.CustomBarrowsFacesOverlay;
+import net.runelite.client.ui.overlay.OverlayManager;
 import com.github.dappermickie.odablock.sounds.DdsSpec;
 import com.github.dappermickie.odablock.sounds.Death;
 import com.github.dappermickie.odablock.sounds.DeclineTrade;
 import com.github.dappermickie.odablock.sounds.DhAxe;
 import com.github.dappermickie.odablock.sounds.DismissRandomEvent;
+import com.github.dappermickie.odablock.sounds.EmptyChestSound;
 import com.github.dappermickie.odablock.sounds.EnteringBankPin;
+import com.github.dappermickie.odablock.sounds.FreezeSound;
 import com.github.dappermickie.odablock.sounds.GiveBone;
 import com.github.dappermickie.odablock.sounds.HairDresser;
+import com.github.dappermickie.odablock.sounds.ItemDrop;
 import com.github.dappermickie.odablock.sounds.KillingPlayer;
 import com.github.dappermickie.odablock.sounds.KillingRat;
 import com.github.dappermickie.odablock.sounds.LevelUp;
@@ -27,21 +35,22 @@ import com.github.dappermickie.odablock.sounds.Pet;
 import com.github.dappermickie.odablock.sounds.PetDog;
 import com.github.dappermickie.odablock.sounds.PkChest;
 import com.github.dappermickie.odablock.sounds.PrayerDown;
+import com.github.dappermickie.odablock.sounds.RandomEventSpawned;
 import com.github.dappermickie.odablock.sounds.QuestCompleted;
 import com.github.dappermickie.odablock.sounds.RedemptionProc;
 import com.github.dappermickie.odablock.sounds.ReportPlayer;
 import com.github.dappermickie.odablock.sounds.RubyBoltProc;
 import com.github.dappermickie.odablock.sounds.SnowBalled;
 import com.github.dappermickie.odablock.sounds.ToaChestLight;
+import com.github.dappermickie.odablock.sounds.TfaChestLight;
 import com.github.dappermickie.odablock.sounds.ToaChestOpens;
 import com.github.dappermickie.odablock.sounds.TobChestLight;
 import com.github.dappermickie.odablock.sounds.TurnOnRun;
 import com.github.dappermickie.odablock.sounds.Vengeance;
+import com.github.dappermickie.odablock.sounds.WelcomeScreenSound;
 import com.github.dappermickie.odablock.sounds.ZebakRoar;
 import com.google.inject.Provides;
-import com.google.inject.name.Named;
 import java.awt.Color;
-import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
@@ -56,6 +65,7 @@ import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.Player;
 import net.runelite.api.events.ActorDeath;
+import net.runelite.api.events.AnimationChanged;
 import net.runelite.api.events.AreaSoundEffectPlayed;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.CommandExecuted;
@@ -65,7 +75,9 @@ import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.InteractingChanged;
 import net.runelite.api.events.MenuOptionClicked;
+import net.runelite.api.events.MenuOpened;
 import net.runelite.api.events.NpcDespawned;
+import net.runelite.api.events.NpcSpawned;
 import net.runelite.api.events.OverheadTextChanged;
 import net.runelite.api.events.PlayerDespawned;
 import net.runelite.api.events.PlayerSpawned;
@@ -78,6 +90,8 @@ import net.runelite.api.events.WallObjectSpawned;
 import net.runelite.api.events.WidgetLoaded;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
+import net.runelite.client.events.NpcLootReceived;
+import net.runelite.client.events.PlayerLootReceived;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
@@ -113,7 +127,6 @@ public class OdablockPlugin extends Plugin
 
 	@Inject
 	private OkHttpClient okHttpClient;
-
 
 	// Start of sound injections
 	@Inject
@@ -213,6 +226,9 @@ public class OdablockPlugin extends Plugin
 	private CoxSounds coxSounds;
 
 	@Inject
+	private TfaChestLight tfaChestLight;
+
+	@Inject
 	private ZebakRoar zebakRoar;
 
 	@Inject
@@ -220,7 +236,40 @@ public class OdablockPlugin extends Plugin
 
 	@Inject
 	private OdablockWarriors odablockWarriors;
+
+	@Inject
+	private FreezeSound freezeSound;
+
+	@Inject
+	private CryptSound cryptSound;
+
+	@Inject
+	private ClientDisconnectSound clientDisconnectSound;
+
+	@Inject
+	private WelcomeScreenSound welcomeScreen;
+
+	@Inject
+	private com.github.dappermickie.odablock.sounds.PhoenixNecklace phoenixNecklace;
+
+	@Inject
+	private EmptyChestSound emptyChestSound;
+
+	@Inject
+	private RandomEventSpawned randomEventSpawned;
+
+	@Inject
+	private ItemDrop itemDrop;
 	// End of sound injections
+
+	@Inject
+	private CustomBarrowsFaces customBarrowsFaces;
+
+	@Inject
+	private CustomBarrowsFacesOverlay customBarrowsFacesOverlay;
+
+	@Inject
+	private OverlayManager overlayManager;
 
 	@Inject
 	private LivestreamManager livestreamManager;
@@ -240,9 +289,6 @@ public class OdablockPlugin extends Plugin
 	@Inject
 	private SoundOverridesPanel soundOverridesPanel;
 
-	@Inject
-	@Named("developerMode")
-	private boolean developerMode;
 
 	private NavigationButton soundOverridesNavigationButton;
 
@@ -251,26 +297,49 @@ public class OdablockPlugin extends Plugin
 	@Override
 	protected void startUp() throws Exception
 	{
-		clientThread.invoke(this::setupOldMaps);
-		achievementDiaries.setLastLoginTick(-1);
-		prayerDown.setLastLoginTick(-1);
+		soundEngine.startUp();
+		clientThread.invoke(() -> {
+			setupOldMaps();
+			clientDisconnectSound.reset(client.getGameState());
+			int loginTick = client.getGameState() == GameState.LOGGED_IN ? client.getTickCount() : -1;
+			levelUp.setLastLoginTick(loginTick);
+			achievementDiaries.setLastLoginTick(loginTick);
+			prayerDown.setLastLoginTick(loginTick);
+			livestreamManager.startUp();
+			notificationManager.startUp();
+		});
 		emoteHandler.loadEmotes();
 		SwingUtilities.invokeLater(this::setUpOverridesNavigation);
+		overlayManager.add(customBarrowsFacesOverlay);
 		executor.submit(() -> {
-			PlayerKillLineManager.Setup(okHttpClient);
+			PlayerKillLineManager.setup(okHttpClient);
 			SoundFileManager.ensureDownloadDirectoryExists();
 			SoundFileManager.downloadAllMissingSounds(okHttpClient);
+			SoundFileManager.downloadMissingBarrowsFaces(okHttpClient);
 			SnowballUserManager.ensureDownloadDirectoryExists();
 			SnowballUserManager.downloadSnowballUsers(okHttpClient);
+			customBarrowsFaces.reloadImages();
 		});
 	}
 
 	@Override
 	protected void shutDown() throws Exception
 	{
+		emoteHandler.shutDown();
+		tfaChestLight.reset();
+		toaChestLight.reset();
 		levelUp.clear();
 		achievementDiaries.clearOldAchievementDiaries();
+		clientThread.invoke(() -> {
+			pet.reset();
+			odablockWarriors.shutDown();
+			livestreamManager.shutDown();
+			notificationManager.shutDown();
+			customBarrowsFaces.shutDown();
+		});
 		soundEngine.close();
+		chatRightClickManager.clear();
+		overlayManager.remove(customBarrowsFacesOverlay);
 		SwingUtilities.invokeLater(this::removeOverridesNavigation);
 	}
 
@@ -346,7 +415,15 @@ public class OdablockPlugin extends Plugin
 	@Subscribe
 	public void onGameStateChanged(GameStateChanged event)
 	{
+		clientDisconnectSound.onGameStateChanged(event);
+		tfaChestLight.onGameStateChanged(event);
+		toaChestLight.onGameStateChanged(event);
 		collectionLog.onGameStateChanged(event);
+		if (event.getGameState() != GameState.LOGGED_IN && event.getGameState() != GameState.LOADING)
+		{
+			soundEngine.stopManagedClip();
+			customBarrowsFaces.resetAnimation();
+		}
 		switch (event.getGameState())
 		{
 			case LOGIN_SCREEN:
@@ -356,10 +433,11 @@ public class OdablockPlugin extends Plugin
 				levelUp.clear();
 				achievementDiaries.clearOldAchievementDiaries();
 			case CONNECTION_LOST:
+				pet.reset();
 				// set to -1 here in-case of race condition with varbits changing before this handler is called
 				// when game state becomes LOGGED_IN
-				//soundEngine.playClip(Sound.CLIENT_DISCONNECTS, executor);
 				livestreamManager.resetStateForWorldHopOrLogin();
+				notificationManager.resetStateForWorldHopOrLogin();
 
 				achievementDiaries.setLastLoginTick(-1);
 				prayerDown.setLastLoginTick(-1);
@@ -367,6 +445,8 @@ public class OdablockPlugin extends Plugin
 				break;
 			case LOGGED_IN:
 				final int currentTick = client.getTickCount();
+				levelUp.setOldExperience();
+				levelUp.setLastLoginTick(currentTick);
 				achievementDiaries.setLastLoginTick(currentTick);
 				prayerDown.setLastLoginTick(currentTick);
 				break;
@@ -385,11 +465,11 @@ public class OdablockPlugin extends Plugin
 		death.onActorDeath(actorDeath);
 	}
 
-
 	@Subscribe
 	public void onChatMessage(ChatMessage chatMessage)
 	{
 		emoteHandler.onChatMessage(chatMessage);
+		reportPlayer.onChatMessage(chatMessage);
 
 		if (acceptTrade.onChatMessage(chatMessage))
 		{
@@ -432,7 +512,15 @@ public class OdablockPlugin extends Plugin
 		{
 			return;
 		}
-		else if (coxSounds.onChatMessage(chatMessage))
+		else if (freezeSound.onChatMessage(chatMessage))
+		{
+			return;
+		}
+		else if (cryptSound.onChatMessage(chatMessage))
+		{
+			return;
+		}
+		else if (phoenixNecklace.onChatMessage(chatMessage))
 		{
 			return;
 		}
@@ -447,7 +535,7 @@ public class OdablockPlugin extends Plugin
 	@Subscribe
 	public void onVarbitChanged(VarbitChanged event)
 	{
-		if (developerMode && config.developerLogging())
+		if (config.developerLogging())
 		{
 			debugScripts.onVarbitChanged(event);
 		}
@@ -456,15 +544,22 @@ public class OdablockPlugin extends Plugin
 		turnOnRun.onVarbitChanged(event);
 		dhAxe.onVarbitChanged(event);
 		tobChestLight.onVarbitChanged(event);
+		tfaChestLight.onVarbitChanged(event);
 		collectionLog.onVarbitChanged(event);
 		achievementDiaries.onVarbitChanged(event);
 		killingPlayer.onVarbitChanged(event);
 	}
 
 	@Subscribe
+	public void onMenuOpened(MenuOpened event)
+	{
+		chatRightClickManager.onMenuOpened(event);
+	}
+
+	@Subscribe
 	public void onMenuOptionClicked(MenuOptionClicked menuOptionClicked)
 	{
-		if (developerMode && config.developerLogging())
+		if (config.developerLogging())
 		{
 			debugScripts.onMenuOptionClicked(menuOptionClicked);
 		}
@@ -480,14 +575,16 @@ public class OdablockPlugin extends Plugin
 	@Subscribe
 	public void onWidgetLoaded(WidgetLoaded event)
 	{
-		if (developerMode && config.developerLogging())
+		if (config.developerLogging())
 		{
 			debugScripts.onWidgetLoaded(event);
 		}
 
 		hairDresser.onWidgetLoaded(event);
 		pkChest.onWidgetLoaded(event);
+		emptyChestSound.onWidgetLoaded(event);
 		odablockWarriors.onWidgetLoaded(event);
+		welcomeScreen.onWidgetLoaded(event);
 	}
 
 	@Subscribe
@@ -509,6 +606,31 @@ public class OdablockPlugin extends Plugin
 	}
 
 	@Subscribe
+	public void onAnimationChanged(AnimationChanged event)
+	{
+		tfaChestLight.onAnimationChanged(event);
+	}
+
+	@Subscribe
+	public void onNpcSpawned(NpcSpawned npcSpawned)
+	{
+		randomEventSpawned.onNpcSpawned(npcSpawned);
+		tfaChestLight.onNpcSpawned(npcSpawned);
+	}
+
+	@Subscribe
+	public void onNpcLootReceived(NpcLootReceived event)
+	{
+		itemDrop.onNpcLootReceived(event);
+	}
+
+	@Subscribe
+	public void onPlayerLootReceived(PlayerLootReceived event)
+	{
+		itemDrop.onPlayerLootReceived(event);
+	}
+
+	@Subscribe
 	public void onProjectileMoved(ProjectileMoved projectileMoved)
 	{
 		snowBalled.onProjectileMoved(projectileMoved);
@@ -526,9 +648,26 @@ public class OdablockPlugin extends Plugin
 		if (OdablockConfig.CONFIG_GROUP.equals(event.getGroup()))
 		{
 			collectionLog.onConfigChanged(event);
+			clientThread.invoke(() -> odablockWarriors.onConfigChanged(event.getKey()));
+			if (event.getKey().equals("announcementVolume") && config.announcementVolume() <= 0)
+			{
+				soundEngine.stopManagedClip();
+			}
+			if (event.getKey().equals("livestream"))
+			{
+				clientThread.invoke(livestreamManager::resetStateForWorldHopOrLogin);
+			}
+			if (event.getKey().equals("notification"))
+			{
+				clientThread.invoke(notificationManager::resetStateForWorldHopOrLogin);
+			}
 			if (event.getKey().equals("showSidebar"))
 			{
 				SwingUtilities.invokeLater(this::setUpOverridesNavigation);
+			}
+			if (event.getKey().startsWith("customBarrows"))
+			{
+				executor.submit(customBarrowsFaces::reloadImages);
 			}
 		}
 	}
@@ -547,6 +686,10 @@ public class OdablockPlugin extends Plugin
 			return;
 		}
 		final Player local = client.getLocalPlayer();
+		if (local == null)
+		{
+			return;
+		}
 		int currentTick = client.getTickCount();
 
 		redemptionProc.onTick(currentTick, local);
@@ -555,9 +698,15 @@ public class OdablockPlugin extends Plugin
 		prayerDown.onGameTick(event);
 		tobChestLight.onGameTick(event);
 		coxSounds.onGameTick(event);
+		tfaChestLight.onGameTick(event);
+		toaChestLight.onGameTick(event);
+		randomEventSpawned.onGameTick(event);
 		livestreamManager.onGameTick(event);
 		notificationManager.onGameTick(event);
-		chatRightClickManager.onGameTick(event);
+		collectionLog.onGameTick(event);
+		pet.onGameTick(event);
+		customBarrowsFaces.onGameTick();
+		odablockWarriors.onGameTick(event);
 
 		// Should always happen after all tick events
 		cleanupTicks(currentTick);
@@ -574,20 +723,37 @@ public class OdablockPlugin extends Plugin
 	@Subscribe
 	public void onAreaSoundEffectPlayed(AreaSoundEffectPlayed event)
 	{
+		if (!shouldHandlePlayerSound(event.getSource()))
+		{
+			return;
+		}
 		acbSpec.onAreaSoundEffectPlayed(event);
 	}
 
 	@Subscribe
 	public void onSoundEffectPlayed(SoundEffectPlayed event)
 	{
-		rubyBoltProc.onSoundEffectPlayed(event);
+		// UI sounds have no actor; boss sounds intentionally originate from an NPC.
 		enteringBankPin.onSoundEffectPlayed(event);
+		zebakRoar.onSoundEffectPlayed(event);
+
+		if (!shouldHandlePlayerSound(event.getSource()))
+		{
+			return;
+		}
+		rubyBoltProc.onSoundEffectPlayed(event);
 		redemptionProc.onSoundPlayed(event);
 		agsSpec.onSoundEffectPlayed(event);
 		ddsSpec.onSoundEffectPlayed(event);
 		prayerDown.onSoundEffectPlayed(event);
-		zebakRoar.onSoundEffectPlayed(event);
 		acbSpec.onSoundEffectPlayed(event);
+	}
+
+	private boolean shouldHandlePlayerSound(net.runelite.api.Actor source)
+	{
+		// Unknown sources cannot be attributed to our player, including during login.
+		return !config.ownPlayerOnly()
+			|| (source != null && source == client.getLocalPlayer());
 	}
 
 	@Subscribe
@@ -601,18 +767,20 @@ public class OdablockPlugin extends Plugin
 	{
 		toaChestOpens.onGameObjectSpawned(event);
 		tobChestLight.onGameObjectSpawned(event);
+		coxSounds.onGameObjectSpawned(event);
 	}
 
 	@Subscribe
 	private void onGameObjectDespawned(GameObjectDespawned event)
 	{
 		tobChestLight.onGameObjectDespawned(event);
+		coxSounds.onGameObjectDespawned(event);
 	}
 
 	@Subscribe
 	public void onScriptCallbackEvent(ScriptCallbackEvent scriptCallbackEvent)
 	{
-		if (developerMode && config.developerLogging())
+		if (config.developerLogging())
 		{
 			debugScripts.onScriptCallbackEvent(scriptCallbackEvent);
 		}
@@ -622,9 +790,6 @@ public class OdablockPlugin extends Plugin
 	public void onCommandExecuted(CommandExecuted event)
 	{
 		emoteHandler.onCommandExecuted(event);
-		//if(event.getCommand().equals("loadwarrior")) {
-		//	odablockWarriors.onWidgetLoaded(null);
-		//}
 	}
 
 	public static int TO_GROUP(int id)

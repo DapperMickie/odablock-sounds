@@ -1,8 +1,5 @@
 package com.github.dappermickie.odablock;
 
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -20,15 +17,6 @@ public class DebugScripts
 
 	@Inject
 	private Client client;
-
-	@Inject
-	private OdablockConfig config;
-
-	@Inject
-	private SoundEngine soundEngine;
-
-	@Inject
-	private ScheduledExecutorService executor;
 
 	public void onMenuOptionClicked(MenuOptionClicked menuOptionClicked)
 	{
@@ -48,9 +36,8 @@ public class DebugScripts
 		builder.append(action.getId());
 		builder.append(" ; TICK: ");
 		builder.append(currentTick);
-		builder.append("\n");
 
-		Logger.getGlobal().log(Level.INFO, builder.toString());
+		log.info(builder.toString());
 	}
 
 	public void onVarbitChanged(VarbitChanged varbitChanged)
@@ -62,9 +49,8 @@ public class DebugScripts
 		builder.append(varbitChanged.getValue());
 		builder.append(" ; VARPID: ");
 		builder.append(varbitChanged.getVarpId());
-		builder.append("\n");
 
-		Logger.getGlobal().log(Level.INFO, builder.toString());
+		log.info(builder.toString());
 	}
 
 	public void onWidgetLoaded(WidgetLoaded event)
@@ -72,7 +58,7 @@ public class DebugScripts
 		StringBuilder builder = new StringBuilder();
 		builder.append("WIDGET GROUP ID: ");
 		builder.append(event.getGroupId());
-		Logger.getGlobal().log(Level.INFO, builder.toString());
+		log.info(builder.toString());
 
 		var widget = client.getWidget(event.getGroupId());
 	}
@@ -95,6 +81,6 @@ public class DebugScripts
 		builder.append(scriptCallbackEvent.hashCode());
 		builder.append("; ENAME: ");
 		builder.append(ename);
-		Logger.getGlobal().log(Level.INFO, builder.toString());
+		log.info(builder.toString());
 	}
 }

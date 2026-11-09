@@ -1,22 +1,17 @@
 package com.github.dappermickie.odablock.sounds;
 
 import com.github.dappermickie.odablock.OdablockConfig;
-import com.github.dappermickie.odablock.RandomSoundUtility;
 import com.github.dappermickie.odablock.Sound;
 import com.github.dappermickie.odablock.SoundEngine;
-import com.github.dappermickie.odablock.overrides.SoundOverrideAction;
 import java.util.Random;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
-import net.runelite.api.events.ChatMessage;
+import net.runelite.api.events.GameObjectDespawned;
+import net.runelite.api.events.GameObjectSpawned;
 import net.runelite.api.events.GameTick;
-import net.runelite.client.util.Text;
 
 @Singleton
 @Slf4j
@@ -37,72 +32,87 @@ public class CoxSounds
 
 	private Random random = new Random();
 
-	// YOINK from https://github.com/AnkouOSRS/cox-light-colors/blob/master/src/main/java/com/coxlightcolors/CoxLightColorsPlugin.java#L82
+	private static final int COX_LIGHT_OBJECT_ID = 28848;
+	private static final int COX_VARBIT_LIGHT_TYPE = 5456;
 
-	private static final Pattern SPECIAL_DROP_MESSAGE = Pattern.compile("(.+) - (.+)");
-	private int endedRaidTick = -1;
-	private boolean isWhiteLight = true;
+	private boolean chestsHandled = false;
+	private boolean lightObjectDetected = false;
 
-	public boolean onChatMessage(ChatMessage chatMessage)
+	public void onGameObjectSpawned(GameObjectSpawned event)
 	{
 		if (!config.coxWhiteChest() && !config.coxPurpleChest())
 		{
-			return false;
+			return;
 		}
-		if (client.getLocalPlayer() == null || client.getLocalPlayer().getName() == null)
+
+		int objectId = event.getGameObject().getId();
+		if (objectId == COX_LIGHT_OBJECT_ID)
 		{
-			return false;
+			log.debug("CoX light object detected: {}", objectId);
+			lightObjectDetected = true;
+			handleLight();
 		}
+	}
 
-		if (chatMessage.getType() == ChatMessageType.FRIENDSCHATNOTIFICATION)
+	public void onGameObjectDespawned(GameObjectDespawned event)
+	{
+		int objectId = event.getGameObject().getId();
+		if (objectId == COX_LIGHT_OBJECT_ID)
 		{
-			String message = Text.removeTags(chatMessage.getMessage());
-
-			if (message.contains("your raid is complete!"))
-			{
-				isWhiteLight = true;
-				endedRaidTick = client.getTickCount();
-				return true;
-			}
-
-			Matcher matcher = SPECIAL_DROP_MESSAGE.matcher(message);
-
-			if (matcher.find())
-			{
-				final String dropReceiver = Text.sanitize(matcher.group(1)).trim();
-				// Maybe we can play a different sound if it's a twisted bow?
-				final String dropName = matcher.group(2).trim();
-
-				// We might want to play a different sound if you're the one receiving the purple
-				if (dropReceiver.equals(Text.sanitize(client.getLocalPlayer().getName())))
-				{
-					isWhiteLight = false;
-				}
-				else
-				{
-					isWhiteLight = false;
-				}
-				return true;
-			}
+			log.debug("CoX light object despawned: {}", objectId);
+			lightObjectDetected = false;
+			chestsHandled = false;
 		}
-
-		return false;
 	}
 
 	public void onGameTick(GameTick event)
 	{
-		if (endedRaidTick != -1 && client.getTickCount() - endedRaidTick == 2)
+		if (!lightObjectDetected || chestsHandled)
 		{
-			if (isWhiteLight)
+			return;
+		}
+
+		int lightType = client.getVarbitValue(COX_VARBIT_LIGHT_TYPE);
+		if (lightType > 0)
+		{
+			log.debug("*** COX LIGHT BECAME ACTIVE *** lightType={}", lightType);
+			handleLight();
+		}
+	}
+
+	private void handleLight()
+	{
+		if (chestsHandled)
+		{
+			return;
+		}
+
+		int lightType = client.getVarbitValue(COX_VARBIT_LIGHT_TYPE);
+		log.debug("*** COX LIGHT DETECTED *** lightType={}", lightType);
+
+		if (lightType == 0)
+		{
+			log.debug("*** COX LIGHT *** Not active yet (lightType=0), waiting for active status");
+			return;
+		}
+
+		chestsHandled = true;
+
+		boolean isPurple = (lightType == 2);
+		if (isPurple)
+		{
+			if (config.coxPurpleChest())
 			{
-				if (config.coxWhiteChest())
-				{
-					soundEngine.playClip(Sound.WHITE_LIGHT_AFTER_RAID, SoundOverrideAction.COX_WHITE_CHEST, executor);
-				}
+				log.debug("*** COX UNIQUE DROP *** playing purple sound");
+				soundEngine.playClip(Sound.GETTING_PURPLE_1, executor);
 			}
-			else if (config.coxPurpleChest())
+		}
+		else
+		{
+			if (config.coxWhiteChest())
 			{
-				soundEngine.playClip(Sound.GETTING_PURPLE_1, SoundOverrideAction.COX_PURPLE_CHEST, executor);
+				log.debug("*** COX STANDARD DROP *** playing white light sound");
+				soundEngine.playClip(Sound.WHITE_LIGHT_AFTER_RAID, executor);
 			}
 		}
 	}

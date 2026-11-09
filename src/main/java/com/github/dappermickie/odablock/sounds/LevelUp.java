@@ -3,7 +3,6 @@ package com.github.dappermickie.odablock.sounds;
 import com.github.dappermickie.odablock.OdablockConfig;
 import com.github.dappermickie.odablock.Sound;
 import com.github.dappermickie.odablock.SoundEngine;
-import com.github.dappermickie.odablock.overrides.SoundOverrideAction;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
@@ -35,10 +34,19 @@ public class LevelUp
 	@Inject
 	private ScheduledExecutorService executor;
 
+	private static final int MAX_TOTAL_LEVEL = 2376;
+
 	private static final String message = "Level up: completed.";
 	private static final String level99Message = "Level 99: completed.";
+	private static final String maxTotalLevelMessage = "Max total level: completed.";
+	private static final int LOGIN_STAT_SYNC_TICK_GRACE = 1;
+	private static final int PVP_ARENA_WORLD_1 = 558;
+	private static final int PVP_ARENA_WORLD_2 = 570;
+	private static final int PVP_ARENA_WORLD_3 = 578;
 
 	private final Map<Skill, Integer> oldExperience = new EnumMap<>(Skill.class);
+	private int oldTotalLevel = -1;
+	private int lastLoginTick = -1;
 
 	public void onStatChanged(StatChanged statChanged)
 	{
@@ -49,8 +57,23 @@ public class LevelUp
 		final int levelAfter = Experience.getLevelForXp(xpAfter);
 		final int xpBefore = oldExperience.getOrDefault(skill, -1);
 		final int levelBefore = xpBefore == -1 ? -1 : Experience.getLevelForXp(xpBefore);
+		final int totalLevelBefore = oldTotalLevel;
+		final int totalLevelAfter = client.getTotalLevel();
 
 		oldExperience.put(skill, xpAfter);
+		oldTotalLevel = totalLevelAfter;
+
+		if (isPvpArenaWorld())
+		{
+			return;
+		}
+
+		// Ignore the login stat sync window. During this period, the client can report
+		// transient stat values that would otherwise look like massive level jumps.
+		if (lastLoginTick >= 0 && client.getTickCount() <= lastLoginTick + LOGIN_STAT_SYNC_TICK_GRACE)
+		{
+			return;
+		}
 
 		// Do not proceed if any of the following are true:
 		//  * xpBefore == -1              (don't fire when first setting new known value)
@@ -68,13 +91,30 @@ public class LevelUp
 		final boolean justReached99 = levelBefore < Experience.MAX_REAL_LEVEL
 			&& levelAfter >= Experience.MAX_REAL_LEVEL;
 
-		if (justReached99 && config.announceLevel99())
+		final boolean justMaxed = totalLevelBefore >= 0
+			&& totalLevelBefore < MAX_TOTAL_LEVEL && totalLevelAfter >= MAX_TOTAL_LEVEL;
+		final boolean announceMaxTotalLevel = justReached99 && justMaxed && config.announceMaxTotalLevel();
+		if (justReached99 && (config.announceLevel99() || announceMaxTotalLevel))
 		{
+
 			if (config.showChatMessages())
 			{
-				client.addChatMessage(ChatMessageType.PUBLICCHAT, ODABLOCK, level99Message, null);
+				client.addChatMessage(
+					ChatMessageType.PUBLICCHAT,
+					ODABLOCK,
+					announceMaxTotalLevel ? maxTotalLevelMessage : level99Message,
+					null
+				);
 			}
-			soundEngine.playClip(Sound.GAMON_GO_LIVE, SoundOverrideAction.LEVEL_99, executor);
+
+			if (announceMaxTotalLevel)
+			{
+				soundEngine.playClip(Sound.BIG_GAMON, executor);
+			}
+			else
+			{
+				soundEngine.playClip(Sound.REGULAR_GAMON, executor);
+			}
 			return;
 		}
 
@@ -84,13 +124,15 @@ public class LevelUp
 			{
 				client.addChatMessage(ChatMessageType.PUBLICCHAT, ODABLOCK, message, null);
 			}
-			soundEngine.playClip(Sound.LEVEL_UP, SoundOverrideAction.LEVEL_UP, executor);
+			soundEngine.playClip(Sound.LEVEL_UP, executor);
 		}
 	}
 
 	public void clear()
 	{
 		oldExperience.clear();
+		oldTotalLevel = -1;
+		lastLoginTick = -1;
 	}
 
 	public void setOldExperience()
@@ -99,5 +141,17 @@ public class LevelUp
 		{
 			oldExperience.put(skill, client.getSkillExperience(skill));
 		}
+		oldTotalLevel = client.getTotalLevel();
+	}
+
+	public void setLastLoginTick(int tick)
+	{
+		lastLoginTick = tick;
+	}
+
+	private boolean isPvpArenaWorld()
+	{
+		final int world = client.getWorld();
+		return world == PVP_ARENA_WORLD_1 || world == PVP_ARENA_WORLD_2 || world == PVP_ARENA_WORLD_3;
 	}
 }

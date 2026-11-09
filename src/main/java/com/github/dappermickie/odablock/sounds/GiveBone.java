@@ -1,10 +1,8 @@
 package com.github.dappermickie.odablock.sounds;
 
 import com.github.dappermickie.odablock.OdablockConfig;
-import static com.github.dappermickie.odablock.OdablockPlugin.ODABLOCK;
 import com.github.dappermickie.odablock.Sound;
 import com.github.dappermickie.odablock.SoundEngine;
-import com.github.dappermickie.odablock.overrides.SoundOverrideAction;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.regex.Pattern;
 import javax.inject.Inject;
@@ -41,7 +39,7 @@ public class GiveBone
 		{
 			client.addChatMessage(ChatMessageType.PUBLICCHAT, "Stella", "Who's a good doggy?", null);
 		}
-		soundEngine.playClip(Sound.EASTER_EGG_STRAYDOG_BONE, SoundOverrideAction.GIVE_BONE, executor);
+		soundEngine.playClip(Sound.EASTER_EGG_STRAYDOG_BONE, executor);
 		return true;
 	}
 }

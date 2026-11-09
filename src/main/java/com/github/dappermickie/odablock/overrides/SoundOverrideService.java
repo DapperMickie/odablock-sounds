@@ -11,6 +11,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -20,7 +21,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -40,9 +40,9 @@ public class SoundOverrideService
 	@Inject
 	private Gson gson;
 
-	public Optional<File> getRandomOverrideFile(final SoundOverrideAction action)
+	public synchronized Optional<File> getRandomOverrideFile(final String poolDirectory)
 	{
-		final Set<String> selectedKeys = getOverrideFileNames(action);
+		final Set<String> selectedKeys = getOverrideFileNames(poolDirectory);
 		if (selectedKeys.isEmpty())
 		{
 			return Optional.empty();
@@ -51,7 +51,7 @@ public class SoundOverrideService
 		List<File> validOverrideFiles = new ArrayList<>();
 		for (String storageKey : selectedKeys)
 		{
-			File resolved = resolveStorageKey(storageKey, action);
+			File resolved = resolveStorageKey(storageKey, poolDirectory);
 			if (resolved != null)
 			{
 				validOverrideFiles.add(resolved);
@@ -66,76 +66,133 @@ public class SoundOverrideService
 		return Optional.of(validOverrideFiles.get(selectedIndex));
 	}
 
-	public Set<String> getOverrideFileNames(final SoundOverrideAction action)
+	public synchronized Set<String> getOverrideFileNames(final String poolDirectory)
 	{
 		Map<String, LinkedHashSet<String>> overridePools = loadOverridePools();
-		LinkedHashSet<String> rawValues = overridePools.getOrDefault(action.getKey(), new LinkedHashSet<>());
-		LinkedHashSet<String> normalized = new LinkedHashSet<>();
-		for (String value : rawValues)
-		{
-			normalized.add(promoteLegacyKey(value, action));
-		}
-		return Collections.unmodifiableSet(normalized);
-	}
+		LinkedHashSet<String> rawValues = overridePools.getOrDefault(poolDirectory, new LinkedHashSet<>());
+		LinkedHashSet<String> sanitized = sanitizeStorageKeys(
+			poolDirectory,
+			rawValues,
+			false,
+			new HashMap<>()
+		);
 
-	public void setOverrideFileNames(final SoundOverrideAction action, final Collection<String> storageKeys)
-	{
-		Map<String, LinkedHashSet<String>> overridePools = loadOverridePools();
-		LinkedHashSet<String> sanitized = storageKeys.stream()
-			.filter(name -> name != null && !name.trim().isEmpty())
-			.map(String::trim)
-			.collect(Collectors.toCollection(LinkedHashSet::new));
-
-		// If the user's selection is empty or matches the action's default sounds exactly,
-		// there is no real override to persist; treat both cases as "clear the override".
-		// This avoids saving a no-op override when a user opens the picker, keeps the
-		// pre-checked defaults, and backs out.
-		if (sanitized.isEmpty() || sanitized.equals(getDefaultStorageKeys(action, false)))
+		boolean changed = !sanitized.equals(rawValues);
+		if (sanitized.isEmpty())
 		{
-			overridePools.remove(action.getKey());
+			changed = overridePools.remove(poolDirectory) != null || changed;
 		}
 		else
 		{
-			overridePools.put(action.getKey(), sanitized);
+			overridePools.put(poolDirectory, sanitized);
+		}
+
+		if (changed)
+		{
+			writeOverridePools(overridePools);
+		}
+
+		return Collections.unmodifiableSet(sanitized);
+	}
+
+	public synchronized void setOverrideFileNames(final String poolDirectory, final Collection<String> storageKeys)
+	{
+		Map<String, LinkedHashSet<String>> overridePools = loadOverridePools();
+		LinkedHashSet<String> sanitized = sanitizeStorageKeys(
+			poolDirectory,
+			storageKeys,
+			false,
+			new HashMap<>()
+		);
+
+		if (sanitized.isEmpty() || sanitized.equals(getDefaultStorageKeys(poolDirectory, false)))
+		{
+			overridePools.remove(poolDirectory);
+		}
+		else
+		{
+			overridePools.put(poolDirectory, sanitized);
 		}
 		writeOverridePools(overridePools);
 	}
 
-	public void clearOverrideFileNames(final SoundOverrideAction action)
+	public synchronized void sanitizePersistedOverrides(final boolean refreshCache)
 	{
 		Map<String, LinkedHashSet<String>> overridePools = loadOverridePools();
-		overridePools.remove(action.getKey());
+		Map<String, LinkedHashSet<String>> sanitizedPools = new LinkedHashMap<>();
+		Map<String, Boolean> directoryHasFilesCache = new HashMap<>();
+		Set<String> knownPools = new LinkedHashSet<>(SoundPools.allDirectories());
+		boolean changed = false;
+
+		for (Map.Entry<String, LinkedHashSet<String>> entry : overridePools.entrySet())
+		{
+			String poolDirectory = SoundPools.normalizePoolKey(entry.getKey());
+			if (!knownPools.contains(poolDirectory))
+			{
+				changed = true;
+				continue;
+			}
+
+			LinkedHashSet<String> sanitized = sanitizeStorageKeys(
+				poolDirectory,
+				entry.getValue(),
+				refreshCache,
+				directoryHasFilesCache
+			);
+
+			if (sanitized.isEmpty())
+			{
+				changed = true;
+				continue;
+			}
+
+			sanitizedPools.put(poolDirectory, sanitized);
+			if (!poolDirectory.equals(entry.getKey()) || !sanitized.equals(entry.getValue()))
+			{
+				changed = true;
+			}
+		}
+
+		if (changed)
+		{
+			writeOverridePools(sanitizedPools);
+		}
+	}
+
+	public synchronized void clearOverrideFileNames(final String poolDirectory)
+	{
+		Map<String, LinkedHashSet<String>> overridePools = loadOverridePools();
+		overridePools.remove(poolDirectory);
 		writeOverridePools(overridePools);
 	}
 
-	public void clearAllOverrides()
+	public synchronized void clearAllOverrides()
 	{
 		writeOverridePools(new LinkedHashMap<>());
 	}
 
-	public String exportOverridesAsJson()
+	public synchronized String exportOverridesAsJson()
 	{
 		Map<String, LinkedHashSet<String>> pools = loadOverridePools();
 		Map<String, List<String>> export = new LinkedHashMap<>();
-		for (SoundOverrideAction action : SoundOverrideAction.values())
+		for (Map.Entry<String, LinkedHashSet<String>> entry : pools.entrySet())
 		{
-			Set<String> keys = pools.get(action.getKey());
-			if (keys == null || keys.isEmpty())
+			if (entry.getValue() == null || entry.getValue().isEmpty())
 			{
 				continue;
 			}
-			export.put(action.getKey(), new ArrayList<>(keys));
+			export.put(entry.getKey(), new ArrayList<>(entry.getValue()));
 		}
 		return gson.toJson(export);
 	}
 
-	public ImportResult importOverridesFromJson(final String json) throws JsonSyntaxException
+	public synchronized ImportResult importOverridesFromJson(final String json) throws JsonSyntaxException
 	{
 		Map<String, List<String>> incoming = parseOverrideJson(json);
 		return applyImportedOverrides(incoming, false);
 	}
 
-	public ImportResult replaceAllOverridesFromJson(final String json) throws JsonSyntaxException
+	public synchronized ImportResult replaceAllOverridesFromJson(final String json) throws JsonSyntaxException
 	{
 		Map<String, List<String>> incoming = parseOverrideJson(json);
 		return applyImportedOverrides(incoming, true);
@@ -143,12 +200,6 @@ public class SoundOverrideService
 
 	private ImportResult applyImportedOverrides(final Map<String, List<String>> incoming, final boolean replaceAll)
 	{
-		Map<String, SoundOverrideAction> knownActions = new LinkedHashMap<>();
-		for (SoundOverrideAction action : SoundOverrideAction.values())
-		{
-			knownActions.put(action.getKey(), action);
-		}
-
 		Map<String, LinkedHashSet<String>> currentPools = replaceAll ? new LinkedHashMap<>() : loadOverridePools();
 		int importedActions = 0;
 		int skippedEntries = 0;
@@ -156,15 +207,14 @@ public class SoundOverrideService
 
 		for (Map.Entry<String, List<String>> entry : incoming.entrySet())
 		{
-			SoundOverrideAction action = knownActions.get(entry.getKey());
-			if (action == null)
+			String poolDirectory = SoundPools.normalizePoolKey(entry.getKey());
+			if (!SoundPools.allDirectories().contains(poolDirectory))
 			{
 				skippedActions++;
 				continue;
 			}
 
 			List<String> rawValues = entry.getValue();
-			LinkedHashSet<String> sanitized = new LinkedHashSet<>();
 			if (rawValues != null)
 			{
 				for (String value : rawValues)
@@ -172,21 +222,23 @@ public class SoundOverrideService
 					if (value == null || value.trim().isEmpty())
 					{
 						skippedEntries++;
-						continue;
 					}
-					String trimmed = value.trim();
-					String promoted = promoteLegacyKey(trimmed, action);
-					sanitized.add(promoted);
 				}
 			}
+			LinkedHashSet<String> sanitized = sanitizeStorageKeys(
+				poolDirectory,
+				rawValues,
+				true,
+				new HashMap<>()
+			);
 
 			if (sanitized.isEmpty())
 			{
-				currentPools.remove(action.getKey());
+				currentPools.remove(poolDirectory);
 			}
 			else
 			{
-				currentPools.put(action.getKey(), sanitized);
+				currentPools.put(poolDirectory, sanitized);
 			}
 			importedActions++;
 		}
@@ -239,27 +291,26 @@ public class SoundOverrideService
 		}
 	}
 
-	public Set<String> getDefaultStorageKeys(final SoundOverrideAction action, final boolean refreshCache)
+	public synchronized Set<String> getDefaultStorageKeys(final String poolDirectory, final boolean refreshCache)
 	{
-		String actionDirectory = action.getDefaultSound().getDirectory();
-		List<File> defaultFiles = SoundFileManager.listFilesInDirectory(actionDirectory, refreshCache);
+		List<File> defaultFiles = SoundFileManager.listFilesInDirectory(poolDirectory, refreshCache);
 		LinkedHashSet<String> keys = new LinkedHashSet<>();
 		for (File file : defaultFiles)
 		{
-			keys.add(actionDirectory + "/" + file.getName());
+			keys.add(poolDirectory + "/" + file.getName());
 		}
 		return keys;
 	}
 
-	public List<SoundOverrideOption> getAllSoundOptions(final SoundOverrideAction action, final boolean refreshCache)
+	public synchronized List<SoundOverrideOption> getAllSoundOptions(final String poolDirectory, final boolean refreshCache)
 	{
 		Set<String> uniqueDirectories = new TreeSet<>();
 		for (Sound sound : Sound.values())
 		{
 			uniqueDirectories.add(sound.getDirectory());
 		}
+		uniqueDirectories.add(SoundFileManager.CUSTOM_DIRECTORY);
 
-		String defaultDirectory = action.getDefaultSound().getDirectory();
 		List<SoundOverrideOption> options = new ArrayList<>();
 
 		for (String directory : uniqueDirectories)
@@ -277,7 +328,7 @@ public class SoundOverrideService
 				filesByLabel.computeIfAbsent(normalized, ignored -> new ArrayList<>()).add(file);
 			}
 
-			boolean isDefaultDir = directory.equals(defaultDirectory);
+			boolean isDefaultDir = directory.equals(poolDirectory);
 
 			for (Map.Entry<String, List<File>> entry : filesByLabel.entrySet())
 			{
@@ -304,47 +355,35 @@ public class SoundOverrideService
 		}
 
 		options.sort((left, right) -> {
-			// defaults first, then alphabetical
 			if (left.isDefaultForAction() != right.isDefaultForAction())
 			{
 				return left.isDefaultForAction() ? -1 : 1;
 			}
-			return left.getDisplayLabel().toLowerCase(Locale.ENGLISH)
-				.compareTo(right.getDisplayLabel().toLowerCase(Locale.ENGLISH));
+			return SoundPools.compareDisplayLabels(
+				left.getDisplayLabel(),
+				right.getDisplayLabel()
+			);
 		});
 		return options;
 	}
 
-	private File resolveStorageKey(String storageKey, SoundOverrideAction action)
+	private File resolveStorageKey(String storageKey, String poolDirectory)
 	{
-		if (storageKey == null || storageKey.isEmpty())
+		StorageKeyParts keyParts = parseStorageKey(storageKey, poolDirectory);
+		if (keyParts == null)
 		{
 			return null;
 		}
-		int separatorIndex = storageKey.indexOf('/');
-		String directory;
-		String fileName;
-		if (separatorIndex < 0)
-		{
-			// Legacy: filename only -> assume action's own directory
-			directory = action.getDefaultSound().getDirectory();
-			fileName = storageKey;
-		}
-		else
-		{
-			directory = storageKey.substring(0, separatorIndex);
-			fileName = storageKey.substring(separatorIndex + 1);
-		}
-		return SoundFileManager.lookupFile(directory, fileName);
+		return SoundFileManager.lookupFile(keyParts.directory, keyParts.fileName);
 	}
 
-	private String promoteLegacyKey(String storageKey, SoundOverrideAction action)
+	private String promoteLegacyKey(String storageKey, String poolDirectory)
 	{
 		if (storageKey == null || storageKey.isEmpty() || storageKey.contains("/"))
 		{
 			return storageKey;
 		}
-		return action.getDefaultSound().getDirectory() + "/" + storageKey;
+		return poolDirectory + "/" + storageKey;
 	}
 
 	private Map<String, LinkedHashSet<String>> loadOverridePools()
@@ -364,18 +403,29 @@ public class SoundOverrideService
 			}
 
 			Map<String, LinkedHashSet<String>> parsedPools = new LinkedHashMap<>();
+			Map<String, Boolean> directoryHasFilesCache = new HashMap<>();
+			Set<String> knownPools = new LinkedHashSet<>(SoundPools.allDirectories());
 			for (Map.Entry<String, List<String>> entry : rawPools.entrySet())
 			{
-				LinkedHashSet<String> parsedValues = entry.getValue() == null
-					? new LinkedHashSet<>()
-					: entry.getValue().stream()
-						.filter(name -> name != null && !name.trim().isEmpty())
-						.map(String::trim)
-						.collect(Collectors.toCollection(LinkedHashSet::new));
-				if (!parsedValues.isEmpty())
+				String poolDirectory = SoundPools.normalizePoolKey(entry.getKey());
+				if (!knownPools.contains(poolDirectory))
 				{
-					parsedPools.put(entry.getKey(), parsedValues);
+					continue;
 				}
+				LinkedHashSet<String> parsedValues = sanitizeStorageKeys(
+					poolDirectory,
+					entry.getValue(),
+					false,
+					directoryHasFilesCache
+				);
+				if (parsedValues.isEmpty())
+				{
+					continue;
+				}
+				parsedPools.merge(poolDirectory, parsedValues, (existing, incoming) -> {
+					existing.addAll(incoming);
+					return existing;
+				});
 			}
 			return parsedPools;
 		}
@@ -386,17 +436,100 @@ public class SoundOverrideService
 		}
 	}
 
-	private void writeOverridePools(final Map<String, LinkedHashSet<String>> pools)
+	private LinkedHashSet<String> sanitizeStorageKeys(
+		final String poolDirectory,
+		final Collection<String> storageKeys,
+		final boolean refreshCache,
+		final Map<String, Boolean> directoryHasFilesCache)
 	{
-		Map<String, List<String>> serialized = new LinkedHashMap<>();
-		for (SoundOverrideAction action : SoundOverrideAction.values())
+		LinkedHashSet<String> sanitized = new LinkedHashSet<>();
+		if (storageKeys == null)
 		{
-			Set<String> keys = pools.get(action.getKey());
-			if (keys == null || keys.isEmpty())
+			return sanitized;
+		}
+
+		for (String value : storageKeys)
+		{
+			if (value == null || value.trim().isEmpty())
 			{
 				continue;
 			}
-			serialized.put(action.getKey(), new ArrayList<>(keys));
+
+			String normalizedKey = promoteLegacyKey(value.trim(), poolDirectory);
+			StorageKeyParts keyParts = parseStorageKey(normalizedKey, poolDirectory);
+			if (keyParts == null)
+			{
+				continue;
+			}
+
+			if (canValidateDirectoryContents(keyParts.directory, refreshCache, directoryHasFilesCache)
+				&& SoundFileManager.lookupFile(keyParts.directory, keyParts.fileName) == null)
+			{
+				continue;
+			}
+
+			sanitized.add(keyParts.directory + "/" + keyParts.fileName);
+		}
+		return sanitized;
+	}
+
+	private boolean canValidateDirectoryContents(
+		final String directory,
+		final boolean refreshCache,
+		final Map<String, Boolean> directoryHasFilesCache)
+	{
+		if (SoundFileManager.CUSTOM_DIRECTORY.equals(directory))
+		{
+			return true;
+		}
+
+		return directoryHasFilesCache.computeIfAbsent(
+			directory,
+			key -> !SoundFileManager.listFilesInDirectory(key, refreshCache).isEmpty()
+		);
+	}
+
+	private StorageKeyParts parseStorageKey(final String storageKey, final String poolDirectory)
+	{
+		if (storageKey == null || storageKey.isEmpty())
+		{
+			return null;
+		}
+
+		int separatorIndex = storageKey.indexOf('/');
+		String directory;
+		String fileName;
+		if (separatorIndex < 0)
+		{
+			directory = poolDirectory;
+			fileName = storageKey;
+		}
+		else
+		{
+			directory = storageKey.substring(0, separatorIndex).trim();
+			fileName = storageKey.substring(separatorIndex + 1).trim();
+		}
+
+		if ((!SoundFileManager.CUSTOM_DIRECTORY.equals(directory) && !SoundPools.allDirectories().contains(directory))
+			|| fileName.isEmpty() || fileName.contains("/") || fileName.contains("\\")
+			|| !fileName.toLowerCase(Locale.ROOT).endsWith(".wav"))
+		{
+			return null;
+		}
+
+		return new StorageKeyParts(directory, fileName);
+	}
+
+	private void writeOverridePools(final Map<String, LinkedHashSet<String>> pools)
+	{
+		Map<String, List<String>> serialized = new LinkedHashMap<>();
+		for (Map.Entry<String, LinkedHashSet<String>> entry : pools.entrySet())
+		{
+			if (entry.getValue() == null || entry.getValue().isEmpty())
+			{
+				continue;
+			}
+			serialized.put(entry.getKey(), new ArrayList<>(entry.getValue()));
 		}
 
 		configManager.setConfiguration(
@@ -404,5 +537,17 @@ public class SoundOverrideService
 			OdablockConfig.SOUND_OVERRIDE_POOLS_KEY,
 			gson.toJson(serialized)
 		);
+	}
+
+	private static final class StorageKeyParts
+	{
+		private final String directory;
+		private final String fileName;
+
+		private StorageKeyParts(String directory, String fileName)
+		{
+			this.directory = directory;
+			this.fileName = fileName;
+		}
 	}
 }

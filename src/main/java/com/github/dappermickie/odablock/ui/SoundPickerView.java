@@ -1,9 +1,9 @@
 package com.github.dappermickie.odablock.ui;
 
 import com.github.dappermickie.odablock.SoundEngine;
-import com.github.dappermickie.odablock.overrides.SoundOverrideAction;
 import com.github.dappermickie.odablock.overrides.SoundOverrideOption;
 import com.github.dappermickie.odablock.overrides.SoundOverrideService;
+import com.github.dappermickie.odablock.overrides.SoundPools;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
@@ -49,7 +49,7 @@ class SoundPickerView extends JPanel
 	private final JPanel cardPanel;
 	private final PluginErrorPanel infoPanel;
 
-	private SoundOverrideAction currentAction;
+	private String currentPoolDirectory;
 	private List<SoundOverrideOption> availableOptions = new ArrayList<>();
 	private final Set<String> selectedKeys = new LinkedHashSet<>();
 	private boolean hasUserEditedSelection;
@@ -84,18 +84,16 @@ class SoundPickerView extends JPanel
 		add(cardPanel, BorderLayout.CENTER);
 	}
 
-	void loadAction(SoundOverrideAction action)
+	void loadPool(String poolDirectory)
 	{
-		this.currentAction = action;
-		titleLabel.setText(action.getDisplayName());
+		this.currentPoolDirectory = poolDirectory;
+		titleLabel.setText(SoundPools.getDisplayName(poolDirectory));
 
-		Set<String> existingPool = soundOverrideService.getOverrideFileNames(action);
+		Set<String> existingPool = soundOverrideService.getOverrideFileNames(poolDirectory);
 		selectedKeys.clear();
 		if (existingPool.isEmpty())
 		{
-			// Pre-check the action's default sounds so users can uncheck the
-			// ones they don't want. Not persisted until they edit.
-			selectedKeys.addAll(soundOverrideService.getDefaultStorageKeys(action, true));
+			selectedKeys.addAll(soundOverrideService.getDefaultStorageKeys(poolDirectory, true));
 			hasUserEditedSelection = false;
 		}
 		else
@@ -104,7 +102,7 @@ class SoundPickerView extends JPanel
 			hasUserEditedSelection = false;
 		}
 
-		availableOptions = soundOverrideService.getAllSoundOptions(action, true);
+		availableOptions = soundOverrideService.getAllSoundOptions(poolDirectory, true);
 		searchField.setText("");
 		rebuildRows(true);
 		SwingUtilities.invokeLater(searchField::requestFocusInWindow);
@@ -199,7 +197,7 @@ class SoundPickerView extends JPanel
 
 	private void rebuildRows(boolean resetScroll)
 	{
-		if (currentAction == null)
+		if (currentPoolDirectory == null)
 		{
 			return;
 		}
@@ -299,7 +297,7 @@ class SoundPickerView extends JPanel
 		}
 		hasUserEditedSelection = true;
 		persistSelections();
-		rebuildRows(false);
+		updateSummary();
 	}
 
 	private void previewOption(SoundOverrideOption option)
@@ -309,11 +307,11 @@ class SoundPickerView extends JPanel
 
 	private void persistSelections()
 	{
-		if (currentAction == null || !hasUserEditedSelection)
+		if (currentPoolDirectory == null || !hasUserEditedSelection)
 		{
 			return;
 		}
-		soundOverrideService.setOverrideFileNames(currentAction, new ArrayList<>(selectedKeys));
+		soundOverrideService.setOverrideFileNames(currentPoolDirectory, new ArrayList<>(selectedKeys));
 		hasUserEditedSelection = false;
 	}
 }

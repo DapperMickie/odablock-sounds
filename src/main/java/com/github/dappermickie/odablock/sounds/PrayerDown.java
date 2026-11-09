@@ -4,15 +4,11 @@ import com.github.dappermickie.odablock.OdablockConfig;
 import com.github.dappermickie.odablock.Sound;
 import com.github.dappermickie.odablock.SoundEngine;
 import com.github.dappermickie.odablock.SoundIds;
-import com.github.dappermickie.odablock.overrides.SoundOverrideAction;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
-import net.runelite.api.Player;
 import net.runelite.api.Skill;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.SoundEffectPlayed;
-import net.runelite.client.eventbus.Subscribe;
-
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.concurrent.ScheduledExecutorService;
@@ -43,14 +39,16 @@ public class PrayerDown
 
 	public void setLastLoginTick(int tick)
 	{
-    	lastLoginTick = tick;
+		lastLoginTick = tick;
+		previousPrayerValue = tick >= 0 ? client.getBoostedSkillLevel(Skill.PRAYER) : -1;
+		notifyPrayer = previousPrayerValue == 0;
 	}
 
 	public void onGameTick(GameTick event)
 	{
 		if (canReplacePrayerDownSound() && checkLowPrayer())
 		{
-			soundEngine.playClip(Sound.SMITED_NO_PRAYER, SoundOverrideAction.PRAYER_DOWN, executor);
+			soundEngine.playClip(Sound.SMITED_NO_PRAYER, executor);
 		}
 	}
 

@@ -16,54 +16,82 @@ BEFORE TRYING ANYTHING ELSE, ENABLE THIS IN THE **RUNESCAPE** SETTINGS
 Whenever this does not resolve your issue, please feel free to look in the [Issues](https://github.com/DapperMickie/odablock-sounds/issues) section of this GitHub page to see if anyone else had this issue.
 ___
 
-## Customizing your sounds
+## Customizing Your Sounds
 
-### Warning
+### The `custom` Folder
 
-Because we have a system in place that automatically updates the sounds for this plugin, it is highly recommended to have a backup folder of your custom sounds. The system __will always__ override all the sounds whenever a sound update comes out. This means that after each sound update, you will have to replace all your custom sounds again.
+The easiest way to add your own sounds is through the **`custom`** folder. This folder is located at:
 
-### 1. Locate your `.runelite` folder
+```
+C:\Users\<your username>\.runelite\odablock-sounds\custom\
+```
 
-On Windows this is likely to be here: `C:\Users\<your username>\.runelite`
+This folder is **never overwritten** during plugin updates — your custom sounds are always safe.
 
-If you aren't sure, it's the same place that stores your `settings.properties`
+### 1. Add your sound files
 
-Within this `.runelite` folder, there should be a `odablock-sounds` folder, which is where the sound files are downloaded to
+Drop any `.wav` files into the `custom` folder. That's it!
 
-### 2. Prepare your sound files
+> **Important:** Files must be actual `.wav` format — just renaming a `.mp3` to `.wav` won't work. Use a converter if needed.
 
-Make sure your files are all `.wav` format (just changing the extension won't work, actually convert them)
+### 2. Name your files
 
-Make sure the file name __exactly__ matches the name of the existing file (in `odablock-sounds` folder) you want to replace
+Use `_` (underscores) or `-` (dashes) to separate words in your file names. The plugin will automatically turn them into clean labels in the UI.
 
-### 3. Understand how the files are handled
+| File Name | Displays As |
+|---|---|
+| `my_death_sound.wav` | My Death Sound |
+| `epic-ags-spec.wav` | Epic AGS Spec |
+| `BigHit.wav` | Big Hit |
 
-If you replace an existing file in `odablock-sounds` using exactly the same file name, your sound will be loaded instead
+### 3. Assign sounds via the Override Picker
 
-If you place a new file with an unexpected file name in `odablock-sounds`, it will be deleted
+Once your files are in the `custom` folder, open the **Sound Overrides** panel in the plugin sidebar. Your custom sounds will appear as options for **any** sound action — just check the ones you want to use.
 
-If you place a new folder inside `odablock-sounds` that is unexpected, this should be left as is, so can be used to store multiple sounds that you may want to swap in at a future date
+### Troubleshooting
 
-If you want to revert to a default sound file, simply delete the relevant file in `odablock-sounds` and the default file will be re-downloaded when the plugin next starts
+- **Sound doesn't play?** Make sure the event plays the default sound first. If it doesn't, the issue is in our plugin or your _in-game_ settings (e.g., collection log notifications must be enabled in-game).
+- **File not showing in the picker?** Confirm it's a valid `.wav` file and is inside the `custom` folder. Restart the client if needed.
+- **Want to reset everything?** Delete the `odablock-sounds` folder and reload your client. Back up your `custom` folder first; deleting it also deletes your own sounds. All defaults will re-download.
 
-### 4. If it fails to play your sound
+### Client disconnect sound
 
-Remove your sound and make sure it plays the default sound for that event - if not, there is something misconfigured in your plugin _or in-game_ settings. For example, the collection log event can only be captured if your _in-game_ notifications for collection log slots are turned on
+**General > Client Disconnect** plays once when the game loses its server connection,
+even though RuneLite itself remains running. It is enabled by default. Normal logout
+and world hopping are silent, and reconnect retries do not repeat the sound.
 
-Check that your file is actually a valid `.wav` and not just a renamed `.mp3` or similar
+### Music player tracks
 
-Check that the file is still there in the `odablock-sounds` folder, if you accidentally used an incorrect file name, it won't have been loaded, and will have been deleted
+Enable **Odablock Warriors** and/or **Terry** under **Music & Emotes** to add separate
+entries at the bottom of the in-game music player. Left-click an entry to **Play**, or right-click it and choose **Stop**. Selecting a normal game track stops the plugin song; all original tracks,
+including **7th Realm**, remain available. Disabling a track removes its entry.
 
-### 5. Resetting all sounds
+Terry - Odablock X @ACRAZEOFFICIAL uses `terry/Terry.wav` on the `sounds-v3` branch.
+Both songs use the existing sound downloader; the release asset catalog includes Terry.
+Both songs use the plugin's announcement volume.
 
-You can reset all the sounds by deleting the `odablock-sounds` folder and then reloading your client.
+### TFA chest opening
+
+**The Fractured Archive > Opening the Chest** plays the existing "Please GAGECK"
+sound once when a party member starts opening the purple chest. It is independent of the
+white/purple reward settings, which announce as soon as the reward can be identified.
+
+### Barrows faces
+
+Standard face images download automatically into `odablock-sounds/odafaces/`.
+Additional `custom_face_*.png` files can be placed there. If an image is missing,
+the normal game face remains visible.
+
+### Legacy Custom Folders
+
+If you previously used the per-sound-directory `custom` subfolders (e.g., `odablock-sounds/death/custom/`), those still work. However, we recommend moving your files into the single root `custom` folder for simplicity — it's easier to manage and will never be deleted.
 ___
 
 ## Other information
 
 ### Currently implemented sounds include
 
-You can find all the sound files [here](https://github.com/DapperMickie/odablock-sounds/tree/sounds-v2) and all the code [here](https://github.com/DapperMickie/odablock-sounds/tree/master/src/main/java/com/github/dappermickie/odablock/sounds).
+You can find all the sound files [here](https://github.com/DapperMickie/odablock-sounds/tree/sounds-v3) and all the code [here](https://github.com/DapperMickie/odablock-sounds/tree/master/src/main/java/com/github/dappermickie/odablock/sounds).
 
 ### Systems
 

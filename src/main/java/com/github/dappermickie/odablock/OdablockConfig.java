@@ -62,15 +62,39 @@ public interface OdablockConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "welcomeScreen",
+		name = "Welcome Screen",
+		description = "Play a sound when you log in and the welcome screen appears?",
+		section = GENERAL_SECTION,
+		position = 14
+	)
+	default boolean welcomeScreen()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "showSidebar",
 		name = "Show Override Sidebar",
 		description = "Show the sound override sidebar panel on the right side of the screen.",
 		section = GENERAL_SECTION,
-		position = 14
+		position = 15
 	)
 	default boolean showSidebar()
 	{
-		return false;
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "clientDisconnect",
+		name = "Client Disconnect",
+		description = "Play a sound when the game loses its connection to the server. Does not trigger for ordinary logout or world hopping.",
+		section = GENERAL_SECTION,
+		position = 16
+	)
+	default boolean clientDisconnect()
+	{
+		return true;
 	}
 
 	// =========================================================================
@@ -193,12 +217,12 @@ public interface OdablockConfig extends Config
 	}
 
 	// =========================================================================
-	// PvP
+	// PvP / PvM
 	// =========================================================================
 
 	@ConfigSection(
-		name = "PvP",
-		description = "PvP-related sounds.",
+		name = "PvP / PvM",
+		description = "PvP and PvM-related sounds.",
 		position = 30
 	)
 	String PVP_SECTION = "pvpSection";
@@ -251,6 +275,42 @@ public interface OdablockConfig extends Config
 		return true;
 	}
 
+	@ConfigItem(
+		keyName = "freezeSound",
+		name = "Freeze Sound",
+		description = "Do you want to play the 'Stop right there mr. squidward' sound when you get frozen?",
+		section = PVP_SECTION,
+		position = 35
+	)
+	default boolean freezeSound()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "cryptSound",
+		name = "Crypt Sound",
+		description = "Do you want to play the 'I did well..' sound when you enter Dharok's Barrows crypt?",
+		section = PVP_SECTION,
+		position = 36
+	)
+	default boolean cryptSound()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "emptyChestSound",
+		name = "Empty Barrows / Moons Chest",
+		description = "Do you want to play 'Fahhhhh' when you open a Barrows or Moons chest with no unique loot?",
+		section = PVP_SECTION,
+		position = 37
+	)
+	default boolean emptyChestSound()
+	{
+		return true;
+	}
+
 	// =========================================================================
 	// Achievements & Milestones
 	// =========================================================================
@@ -289,7 +349,7 @@ public interface OdablockConfig extends Config
 	@ConfigItem(
 		keyName = "announceLevel99",
 		name = "Level 99",
-		description = "Should Odablock play the gamon sound when you reach level 99 in a skill? This replaces the standard level-up sound for that milestone.",
+		description = "Should Odablock play a sound when you reach level 99 in a skill? This replaces the standard level-up sound for that milestone.",
 		section = ACHIEVEMENTS_SECTION,
 		position = 43
 	)
@@ -299,11 +359,23 @@ public interface OdablockConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "announceMaxTotalLevel",
+		name = "Max Total Level",
+		description = "Should Odablock play a special sound when a level 99 completes max total level (2376)? When disabled, maxing uses the regular level 99 sound instead.",
+		section = ACHIEVEMENTS_SECTION,
+		position = 44
+	)
+	default boolean announceMaxTotalLevel()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "announceQuestCompletion",
 		name = "Quest Completions",
 		description = "Should Odablock announce when you complete a quest?",
 		section = ACHIEVEMENTS_SECTION,
-		position = 44
+		position = 45
 	)
 	default boolean announceQuestCompletion()
 	{
@@ -315,7 +387,7 @@ public interface OdablockConfig extends Config
 		name = "New Collection Log Entry",
 		description = "Should Odablock announce when you fill in a new slot in your collection log? This relies on you having chat messages enabled in the game settings, including the popup option.",
 		section = ACHIEVEMENTS_SECTION,
-		position = 45
+		position = 46
 	)
 	default boolean announceCollectionLog()
 	{
@@ -327,7 +399,7 @@ public interface OdablockConfig extends Config
 		name = "Completed Achievement Diaries",
 		description = "Should Odablock announce when you complete a new achievement diary?",
 		section = ACHIEVEMENTS_SECTION,
-		position = 46
+		position = 47
 	)
 	default boolean announceAchievementDiary()
 	{
@@ -339,7 +411,7 @@ public interface OdablockConfig extends Config
 		name = "Completed Combat Achievement Tasks",
 		description = "Should Odablock announce when you complete a new combat achievement task?",
 		section = ACHIEVEMENTS_SECTION,
-		position = 47
+		position = 48
 	)
 	default boolean announceCombatAchievement()
 	{
@@ -351,7 +423,7 @@ public interface OdablockConfig extends Config
 		name = "When You Die",
 		description = "Should Odablock say something when you die?",
 		section = ACHIEVEMENTS_SECTION,
-		position = 48
+		position = 49
 	)
 	default boolean announceDeath()
 	{
@@ -363,7 +435,7 @@ public interface OdablockConfig extends Config
 		name = "Received Pet",
 		description = "Should Odablock say something whenever you receive a pet?",
 		section = ACHIEVEMENTS_SECTION,
-		position = 49
+		position = 50
 	)
 	default boolean receivedPet()
 	{
@@ -375,7 +447,7 @@ public interface OdablockConfig extends Config
 		name = "Killing Rat or Scurrius",
 		description = "Should Odablock say something whenever you kill a rat or Scurrius?",
 		section = ACHIEVEMENTS_SECTION,
-		position = 50
+		position = 51
 	)
 	default boolean killingRat()
 	{
@@ -430,11 +502,35 @@ public interface OdablockConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "randomEventSpawned",
+		name = "Random Event Spawned",
+		description = "Should Odablock play the 'Random Event Spawned' sound when a random event NPC spawns for you?",
+		section = INTERACTIONS_SECTION,
+		position = 54
+	)
+	default boolean randomEventSpawned()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "phoenixNecklace",
+		name = "Phoenix Necklace",
+		description = "Should Odablock say something when your phoenix necklace breaks?",
+		section = INTERACTIONS_SECTION,
+		position = 55
+	)
+	default boolean phoenixNecklace()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "petDog",
 		name = "Pet the Dog",
 		description = "Should Stella say 'Who's a good little zoggy!' when you pet the dog?",
 		section = INTERACTIONS_SECTION,
-		position = 54
+		position = 56
 	)
 	default boolean petDog()
 	{
@@ -446,7 +542,7 @@ public interface OdablockConfig extends Config
 		name = "Give Bone",
 		description = "Should Stella say something whenever you give a bone to a dog?",
 		section = INTERACTIONS_SECTION,
-		position = 55
+		position = 57
 	)
 	default boolean giveBone()
 	{
@@ -458,7 +554,7 @@ public interface OdablockConfig extends Config
 		name = "Hairdresser",
 		description = "Should Odablock say something whenever you open the hairdresser interface in Falador?",
 		section = INTERACTIONS_SECTION,
-		position = 56
+		position = 58
 	)
 	default boolean hairDresser()
 	{
@@ -470,7 +566,7 @@ public interface OdablockConfig extends Config
 		name = "Turn on Run",
 		description = "Should Odablock say 'FAST! I said FAST!' when you turn your run on?",
 		section = INTERACTIONS_SECTION,
-		position = 57
+		position = 59
 	)
 	default boolean turnOnRun()
 	{
@@ -482,11 +578,37 @@ public interface OdablockConfig extends Config
 		name = "Bank PIN",
 		description = "Should Odablock make the 'ai ai ai ai' sound when you type in your bank PIN?",
 		section = INTERACTIONS_SECTION,
-		position = 58
+		position = 60
 	)
 	default boolean bankPin()
 	{
 		return true;
+	}
+
+
+	@ConfigItem(
+		keyName = "itemDrop",
+		name = "Item Drop",
+		description = "Should Odablock play a sound when you receive a valuable item drop from a kill?",
+		section = INTERACTIONS_SECTION,
+		position = 62
+	)
+	default boolean itemDrop()
+	{
+		return true;
+	}
+
+	@Range(min = 0, max = 2147483647)
+	@ConfigItem(
+		keyName = "itemDropMinGeValue",
+		name = "Item Drop Minimum GE Value",
+		description = "Minimum Grand Exchange value for loot from your kills to trigger the item drop sound.",
+		section = INTERACTIONS_SECTION,
+		position = 63
+	)
+	default int itemDropMinGeValue()
+	{
+		return 10_000_000;
 	}
 
 	// =========================================================================
@@ -598,13 +720,56 @@ public interface OdablockConfig extends Config
 		return true;
 	}
 
+	@ConfigSection(
+		name = "The Fractured Archive",
+		description = "All configurations regarding The Fractured Archive.",
+		position = 350
+	)
+	String TFA_SECTION = "tfaSection";
+
+	@ConfigItem(
+		keyName = "tfaWhiteChest",
+		name = "TFA White Chest",
+		description = "Should Odablock say something as soon as your regular chest is identified at The Fractured Archive?",
+		section = TFA_SECTION,
+		position = 351
+	)
+	default boolean tfaWhiteChest()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "tfaPurpleChest",
+		name = "TFA Purple Chest",
+		description = "Should Odablock say something as soon as your purple chest is identified at The Fractured Archive?",
+		section = TFA_SECTION,
+		position = 352
+	)
+	default boolean tfaPurpleChest()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "tfaPurpleChestOpens",
+		name = "Opening the Chest",
+		description = "When enabled, Odablock will say 'Please GAGECK' when someone in your party starts opening the purple chest at The Fractured Archive.",
+		section = TFA_SECTION,
+		position = 353
+	)
+	default boolean tfaPurpleChestOpens()
+	{
+		return true;
+	}
+
 	// =========================================================================
 	// Music & Emotes
 	// =========================================================================
 
 	@ConfigSection(
 		name = "Music & Emotes",
-		description = "Music replacements and Odablock emote handling.",
+		description = "Additional music tracks and Odablock emote handling.",
 		position = 400
 	)
 	String MUSIC_EMOTES_SECTION = "musicEmotesSection";
@@ -612,12 +777,23 @@ public interface OdablockConfig extends Config
 	@ConfigItem(
 		keyName = "warriors",
 		name = "Odablock Warriors",
-		description = "Should the '7th Realm' in-game sound be replaced with the Odablock Warriors song?",
+		description = "Add Odablock Warriors as its own entry at the bottom of the in-game music player.",
 		section = MUSIC_EMOTES_SECTION,
-		position = 401,
-		warning = "If you turn this off, you'll have to reload the client to be able to manually play '7th Realm' again."
+		position = 401
 	)
 	default boolean warriors()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "terry",
+		name = "Terry",
+		description = "Add Terry - Odablock X @ACRAZEOFFICIAL as its own entry at the bottom of the in-game music player.",
+		section = MUSIC_EMOTES_SECTION,
+		position = 401
+	)
+	default boolean terry()
 	{
 		return true;
 	}
@@ -740,28 +916,123 @@ public interface OdablockConfig extends Config
 		return Color.RED;
 	}
 
+	@ConfigItem(
+		keyName = "notificationPlaySound",
+		name = "Play Sound",
+		description = "Should Odablock play a sound when a notification is sent?",
+		section = NOTIFICATION_SECTION,
+		position = 603
+	)
+	default boolean notificationPlaySound()
+	{
+		return true;
+	}
+
 	// =========================================================================
-	// Developer (always last)
+	// Debug
 	// =========================================================================
 
 	@ConfigSection(
-		name = "Developer",
-		description = "Developer mode configurations.",
+		name = "Debug",
+		description = "Troubleshooting and logging options.",
 		position = 900,
 		closedByDefault = true
 	)
-	String DEVELOPER_SECTION = "developerSection";
+	String DEBUG_SECTION = "debugSection";
 
 	@ConfigItem(
 		keyName = "developerLogging",
-		name = "Developer Logging",
-		description = "Enable developer logging when developer mode is active.",
-		section = DEVELOPER_SECTION,
+		name = "Debug Logging",
+		description = "Log game state changes for troubleshooting.",
+		section = DEBUG_SECTION,
 		position = 901
 	)
 	default boolean developerLogging()
 	{
 		return false;
+	}
+
+	// =========================================================================
+	// Custom Barrows Faces Settings
+	// =========================================================================
+
+	@ConfigSection(
+		name = "Custom Barrows Faces",
+		description = "Configure custom faces for Barrows Brothers.",
+		position = 600
+	)
+	String CUSTOM_BARROWS_SECTION = "customBarrowsSection";
+
+	@ConfigItem(
+		keyName = "customBarrowsAhrim",
+		name = "Ahrim",
+		description = "Enable custom barrows face overlay for Ahrim.",
+		section = CUSTOM_BARROWS_SECTION,
+		position = 601
+	)
+	default boolean customBarrowsAhrim()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "customBarrowsDharok",
+		name = "Dharok",
+		description = "Enable custom barrows face overlay for Dharok.",
+		section = CUSTOM_BARROWS_SECTION,
+		position = 602
+	)
+	default boolean customBarrowsDharok()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "customBarrowsGuthan",
+		name = "Guthan",
+		description = "Enable custom barrows face overlay for Guthan.",
+		section = CUSTOM_BARROWS_SECTION,
+		position = 603
+	)
+	default boolean customBarrowsGuthan()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "customBarrowsKaril",
+		name = "Karil",
+		description = "Enable custom barrows face overlay for Karil.",
+		section = CUSTOM_BARROWS_SECTION,
+		position = 604
+	)
+	default boolean customBarrowsKaril()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "customBarrowsTorag",
+		name = "Torag",
+		description = "Enable custom barrows face overlay for Torag.",
+		section = CUSTOM_BARROWS_SECTION,
+		position = 605
+	)
+	default boolean customBarrowsTorag()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "customBarrowsVerac",
+		name = "Verac",
+		description = "Enable custom barrows face overlay for Verac.",
+		section = CUSTOM_BARROWS_SECTION,
+		position = 606
+	)
+	default boolean customBarrowsVerac()
+	{
+		return true;
 	}
 
 	// =========================================================================

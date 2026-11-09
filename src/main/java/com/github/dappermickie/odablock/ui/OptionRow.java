@@ -21,6 +21,9 @@ import net.runelite.client.util.SwingUtil;
 class OptionRow extends JPanel
 {
 	private static final Color SELECTED_ACCENT = new Color(95, 175, 95);
+	private boolean selected;
+	private final JLabel selectionIcon;
+	private final JLabel nameLabel;
 
 	OptionRow(
 		SoundOverrideOption option,
@@ -28,17 +31,15 @@ class OptionRow extends JPanel
 		Consumer<SoundOverrideOption> onToggle,
 		Consumer<SoundOverrideOption> onPreview)
 	{
+		this.selected = selected;
 		setLayout(new BorderLayout(8, 0));
 		setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		setBorder(new CompoundBorder(
-			BorderFactory.createMatteBorder(0, 3, 0, 0, selected ? SELECTED_ACCENT : ColorScheme.BORDER_COLOR),
-			new EmptyBorder(6, 8, 6, 6)
-		));
+		setBorder(buildBorder(selected));
 
-		JLabel selectionIcon = new JLabel(selected ? ToolbarIcons.CHECK : null);
+		selectionIcon = new JLabel(selected ? ToolbarIcons.CHECK : null);
 		selectionIcon.setPreferredSize(new Dimension(16, 16));
 
-		JLabel nameLabel = new JLabel(option.getDisplayLabel());
+		nameLabel = new JLabel(option.getDisplayLabel());
 		nameLabel.setForeground(selected ? Color.WHITE : ColorScheme.LIGHT_GRAY_COLOR);
 		nameLabel.setFont(FontManager.getRunescapeFont());
 		nameLabel.setToolTipText(option.getDirectory() + "/" + option.getFileName());
@@ -114,11 +115,28 @@ class OptionRow extends JPanel
 				}
 				if (onToggle != null)
 				{
+					setSelectedState(!OptionRow.this.selected);
 					onToggle.accept(option);
 				}
 			}
 		});
 
 		setMaximumSize(new Dimension(Integer.MAX_VALUE, getPreferredSize().height));
+	}
+
+	private CompoundBorder buildBorder(boolean selected)
+	{
+		return new CompoundBorder(
+			BorderFactory.createMatteBorder(0, 3, 0, 0, selected ? SELECTED_ACCENT : ColorScheme.BORDER_COLOR),
+			new EmptyBorder(6, 8, 6, 6)
+		);
+	}
+
+	private void setSelectedState(boolean selected)
+	{
+		this.selected = selected;
+		selectionIcon.setIcon(selected ? ToolbarIcons.CHECK : null);
+		nameLabel.setForeground(selected ? Color.WHITE : ColorScheme.LIGHT_GRAY_COLOR);
+		setBorder(buildBorder(selected));
 	}
 }

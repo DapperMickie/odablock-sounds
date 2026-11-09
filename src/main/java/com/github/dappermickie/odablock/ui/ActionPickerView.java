@@ -1,7 +1,7 @@
 package com.github.dappermickie.odablock.ui;
 
-import com.github.dappermickie.odablock.overrides.SoundOverrideAction;
 import com.github.dappermickie.odablock.overrides.SoundOverrideService;
+import com.github.dappermickie.odablock.overrides.SoundPools;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.CardLayout;
@@ -34,7 +34,7 @@ class ActionPickerView extends JPanel
 	private static final String CARD_INFO = "INFO";
 
 	private final SoundOverrideService soundOverrideService;
-	private final Consumer<SoundOverrideAction> onActionSelected;
+	private final Consumer<String> onPoolSelected;
 	private final Runnable onCancel;
 
 	private final IconTextField searchField;
@@ -46,11 +46,11 @@ class ActionPickerView extends JPanel
 
 	ActionPickerView(
 		SoundOverrideService soundOverrideService,
-		Consumer<SoundOverrideAction> onActionSelected,
+		Consumer<String> onPoolSelected,
 		Runnable onCancel)
 	{
 		this.soundOverrideService = soundOverrideService;
-		this.onActionSelected = onActionSelected;
+		this.onPoolSelected = onPoolSelected;
 		this.onCancel = onCancel;
 
 		this.searchField = new IconTextField();
@@ -110,7 +110,7 @@ class ActionPickerView extends JPanel
 		titleRow.add(titleLabel, BorderLayout.WEST);
 		titleRow.add(closeButton, BorderLayout.EAST);
 
-		JLabel subtitle = new JLabel("Choose which action to override");
+		JLabel subtitle = new JLabel("Choose which sound to override");
 		subtitle.setForeground(ColorScheme.LIGHT_GRAY_COLOR);
 		subtitle.setBorder(new EmptyBorder(4, 0, 8, 0));
 
@@ -156,7 +156,7 @@ class ActionPickerView extends JPanel
 		JPanel infoWrapper = new JPanel(new BorderLayout());
 		infoWrapper.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		infoWrapper.setBorder(new EmptyBorder(20, 8, 20, 8));
-		infoPanel.setContent("No matches", "No actions match your search.");
+		infoPanel.setContent("No matches", "No sounds match your search.");
 		infoWrapper.add(infoPanel, BorderLayout.NORTH);
 
 		cardPanel.add(scrollPane, CARD_RESULTS);
@@ -170,15 +170,18 @@ class ActionPickerView extends JPanel
 
 		String query = searchField.getText() == null ? "" : searchField.getText().trim().toLowerCase(Locale.ENGLISH);
 		int matchCount = 0;
-		for (SoundOverrideAction action : SoundOverrideAction.values())
+		for (String poolDirectory : SoundPools.allDirectories())
 		{
-			if (!query.isEmpty() && !action.getDisplayName().toLowerCase(Locale.ENGLISH).contains(query))
+			String displayName = SoundPools.getDisplayName(poolDirectory);
+			if (!query.isEmpty()
+				&& !displayName.toLowerCase(Locale.ENGLISH).contains(query)
+				&& !poolDirectory.toLowerCase(Locale.ENGLISH).contains(query))
 			{
 				continue;
 			}
 
-			boolean alreadyOverridden = !soundOverrideService.getOverrideFileNames(action).isEmpty();
-			JPanel row = createRow(action, alreadyOverridden);
+			boolean alreadyOverridden = !soundOverrideService.getOverrideFileNames(poolDirectory).isEmpty();
+			JPanel row = createRow(poolDirectory, displayName, alreadyOverridden);
 
 			JPanel margin = new JPanel(new BorderLayout());
 			margin.setBackground(ColorScheme.DARK_GRAY_COLOR);
@@ -204,7 +207,7 @@ class ActionPickerView extends JPanel
 		scrollPane.scrollToTop();
 	}
 
-	private JPanel createRow(SoundOverrideAction action, boolean alreadyOverridden)
+	private JPanel createRow(String poolDirectory, String displayName, boolean alreadyOverridden)
 	{
 		JPanel row = new JPanel(new BorderLayout(6, 0));
 		row.setBackground(ColorScheme.DARKER_GRAY_COLOR);
@@ -214,7 +217,7 @@ class ActionPickerView extends JPanel
 			new EmptyBorder(8, 10, 8, 10)
 		));
 
-		JLabel nameLabel = new JLabel(action.getDisplayName());
+		JLabel nameLabel = new JLabel(displayName);
 		nameLabel.setForeground(Color.WHITE);
 		nameLabel.setFont(FontManager.getRunescapeFont());
 
@@ -230,8 +233,8 @@ class ActionPickerView extends JPanel
 
 		row.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 		row.setToolTipText(alreadyOverridden
-			? "Edit existing override for " + action.getDisplayName()
-			: "Create override for " + action.getDisplayName());
+			? "Edit existing override for " + displayName
+			: "Create override for " + displayName);
 
 		final Color hoverBackground = ColorScheme.DARK_GRAY_HOVER_COLOR;
 		final Color normalBackground = ColorScheme.DARKER_GRAY_COLOR;
@@ -252,9 +255,9 @@ class ActionPickerView extends JPanel
 			@Override
 			public void mouseReleased(MouseEvent event)
 			{
-				if (event.getButton() == MouseEvent.BUTTON1 && onActionSelected != null)
+				if (event.getButton() == MouseEvent.BUTTON1 && onPoolSelected != null)
 				{
-					onActionSelected.accept(action);
+					onPoolSelected.accept(poolDirectory);
 				}
 			}
 		});

@@ -1,19 +1,15 @@
 package com.github.dappermickie.odablock.sounds;
 
 import com.github.dappermickie.odablock.OdablockConfig;
-import com.github.dappermickie.odablock.OdablockPlugin;
 import com.github.dappermickie.odablock.Sound;
 import com.github.dappermickie.odablock.SoundEngine;
-import com.github.dappermickie.odablock.overrides.SoundOverrideAction;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.MenuAction;
 import net.runelite.api.Player;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.MenuOptionClicked;
-import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.util.Text;
-
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.concurrent.ScheduledExecutorService;
@@ -44,7 +40,7 @@ public class PetDog
 		int currentTick = client.getTickCount();
 		Player local = client.getLocalPlayer();
 		// Petting the dog sound, only play sound when message is sent by local player within 15ticks of petting the dog
-		if (config.petDog() &&
+		if (config.petDog() && local != null &&
 			// pet dog message
 			Text.standardize(chatMessage.getMessage()).equals(messageByClient) &&
 			// sent by current local user
@@ -53,7 +49,7 @@ public class PetDog
 			// Check if last pet dog click is within 15 ticks
 			if (lastPetDogTick == -1 || currentTick - lastPetDogTick < 15)
 			{
-				soundEngine.playClip(Sound.PETTING_DOG, SoundOverrideAction.PET_DOG, executor);
+				soundEngine.playClip(Sound.PETTING_DOG, executor);
 				return true;
 			}
 		}
