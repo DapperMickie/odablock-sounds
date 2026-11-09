@@ -39,6 +39,13 @@ public class Pet
 	private boolean pendingPetReceived = false;
 	private boolean heronReceived = false;
 
+	public void reset()
+	{
+		pendingPetReceived = false;
+		heronReceived = false;
+		receivedPetTick = -1;
+	}
+
 	public void setHeronReceived()
 	{
 		this.heronReceived = true;

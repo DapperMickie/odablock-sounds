@@ -330,6 +330,7 @@ public class OdablockPlugin extends Plugin
 		levelUp.clear();
 		achievementDiaries.clearOldAchievementDiaries();
 		clientThread.invoke(() -> {
+			pet.reset();
 			odablockWarriors.shutDown();
 			livestreamManager.shutDown();
 			notificationManager.shutDown();
@@ -431,6 +432,7 @@ public class OdablockPlugin extends Plugin
 				levelUp.clear();
 				achievementDiaries.clearOldAchievementDiaries();
 			case CONNECTION_LOST:
+				pet.reset();
 				// set to -1 here in-case of race condition with varbits changing before this handler is called
 				// when game state becomes LOGGED_IN
 				livestreamManager.resetStateForWorldHopOrLogin();
@@ -654,7 +656,7 @@ public class OdablockPlugin extends Plugin
 			{
 				clientThread.invoke(livestreamManager::resetStateForWorldHopOrLogin);
 			}
-			if (event.getKey().equals("notifications"))
+			if (event.getKey().equals("notification"))
 			{
 				clientThread.invoke(notificationManager::resetStateForWorldHopOrLogin);
 			}

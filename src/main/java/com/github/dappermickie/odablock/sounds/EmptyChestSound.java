@@ -21,12 +21,12 @@ import net.runelite.client.util.Text;
 public class EmptyChestSound
 {
 	private static final String[] BARROWS_BROTHER_PREFIXES = {
-		"ahrim s",
-		"dharok s",
-		"guthan s",
-		"karil s",
-		"torag s",
-		"verac s",
+		"ahrim",
+		"dharok",
+		"guthan",
+		"karil",
+		"torag",
+		"verac",
 	};
 
 	@Inject

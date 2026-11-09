@@ -25,11 +25,18 @@ public final class SoundPools
 		DISPLAY_NAME_COLLATOR.setStrength(Collator.PRIMARY);
 	}
 
+	private static final List<String> ALL_DIRECTORIES = buildAllDirectories();
+
 	private SoundPools()
 	{
 	}
 
 	public static List<String> allDirectories()
+	{
+		return ALL_DIRECTORIES;
+	}
+
+	private static List<String> buildAllDirectories()
 	{
 		TreeSet<String> directories = new TreeSet<>();
 		for (Sound sound : Sound.values())
@@ -38,7 +45,7 @@ public final class SoundPools
 		}
 		List<String> sorted = new ArrayList<>(directories);
 		sorted.sort(SoundPools::compareByDisplayName);
-		return sorted;
+		return Collections.unmodifiableList(sorted);
 	}
 
 	public static List<String> allDirectoriesSortedByDisplayName()
