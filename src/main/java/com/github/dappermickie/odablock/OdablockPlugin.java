@@ -326,6 +326,7 @@ public class OdablockPlugin extends Plugin
 	protected void shutDown() throws Exception
 	{
 		tfaChestLight.reset();
+		toaChestLight.reset();
 		levelUp.clear();
 		achievementDiaries.clearOldAchievementDiaries();
 		clientThread.invoke(() -> {
@@ -414,6 +415,7 @@ public class OdablockPlugin extends Plugin
 	{
 		clientDisconnectSound.onGameStateChanged(event);
 		tfaChestLight.onGameStateChanged(event);
+		toaChestLight.onGameStateChanged(event);
 		collectionLog.onGameStateChanged(event);
 		if (event.getGameState() != GameState.LOGGED_IN && event.getGameState() != GameState.LOADING)
 		{
@@ -694,6 +696,7 @@ public class OdablockPlugin extends Plugin
 		tobChestLight.onGameTick(event);
 		coxSounds.onGameTick(event);
 		tfaChestLight.onGameTick(event);
+		toaChestLight.onGameTick(event);
 		randomEventSpawned.onGameTick(event);
 		livestreamManager.onGameTick(event);
 		notificationManager.onGameTick(event);
