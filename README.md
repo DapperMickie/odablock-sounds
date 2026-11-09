@@ -1,7 +1,7 @@
 # Emote catalog
 
-This directory supplies the root of the independent `emotes` branch.
-The plugin checks emotes.json at startup and every five minutes.
+This independent `emotes` branch contains the emote mapping and images.
+The plugin checks emotes.json only at startup or when re-enabled.
 Add a PNG and an entry with trigger, file, optional overheadFile, and altTriggers.
 The oda prefix is added automatically to word triggers and aliases.
 Increment version whenever changing images. Upload images before publishing the manifest.
