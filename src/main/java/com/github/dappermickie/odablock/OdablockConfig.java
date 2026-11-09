@@ -64,7 +64,7 @@ public interface OdablockConfig extends Config
 	@ConfigItem(
 		keyName = "welcomeScreen",
 		name = "Welcome Screen",
-		description = "Do you want to play the '' sound whenever you login and the welcome screen pops up?",
+		description = "Play a sound when you log in and the welcome screen appears?",
 		section = GENERAL_SECTION,
 		position = 14
 	)
