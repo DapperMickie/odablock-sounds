@@ -47,14 +47,14 @@ public class EmoteHandler
 
 	@Inject private EmoteCatalog catalog;
 	@Inject private java.util.concurrent.ScheduledExecutorService executor;
-	private java.util.concurrent.ScheduledFuture<?> refreshTask;
+	private java.util.concurrent.Future<?> refreshTask;
 	private long generation;
 
 	public void loadEmotes()
 	{
 		catalog.reset();
 		long active = ++generation;
-		refreshTask = executor.scheduleWithFixedDelay(() -> {
+		refreshTask = executor.submit(() -> {
 			try
 			{
 				Emote[] emotes = catalog.refresh();
@@ -64,7 +64,7 @@ public class EmoteHandler
 				});
 			}
 			catch (Exception e) { log.warn("Could not refresh emotes", e); }
-		}, 0, 5, java.util.concurrent.TimeUnit.MINUTES);
+		});
 	}
 	public void shutDown()
 	{
