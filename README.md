@@ -124,3 +124,13 @@ Because the OSRS team adds new player kill lines from time to time, we've chosen
 ### Known Issues
 
 PulseAudio on Linux can just refuse to accept the audio formats used despite claiming to accept them.
+
+## Development
+
+Use JDK 11 or newer with the checked-in Gradle 8.10 wrapper. Compilation targets Java 11.
+
+- `./gradlew build` compiles and checks the plugin.
+- `./gradlew run` starts RuneLite with Odablock loaded, assertions enabled, and developer mode.
+- `./gradlew shadowJar` creates a standalone development JAR in `build/libs`. Start it with `java -ea -jar <jar-path> --developer-mode --debug`.
+
+On Windows use `gradlew.bat` instead of `./gradlew`.

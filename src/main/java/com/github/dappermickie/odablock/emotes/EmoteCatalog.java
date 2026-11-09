@@ -15,6 +15,7 @@ public class EmoteCatalog
  private static final String BASE = "https://raw.githubusercontent.com/DapperMickie/odablock-sounds/emotes/";
  private static final Path CACHE = RuneLite.RUNELITE_DIR.toPath().resolve("odablock-emotes");
  @Inject private OkHttpClient http;
+ @Inject private Gson gson;
  private static class Manifest { int version; Emote[] emotes; }
  private String installed;
  synchronized void reset() { installed = null; }
@@ -30,7 +31,7 @@ public class EmoteCatalog
    json = Files.readString(CACHE.resolve("emotes.json"));
   }
   if (json.equals(installed)) return null;
-  Manifest manifest = new Gson().fromJson(json, Manifest.class);
+  Manifest manifest = gson.fromJson(json, Manifest.class);
   if (manifest == null || manifest.version < 1 || manifest.emotes == null || manifest.emotes.length == 0)
    throw new IOException("Invalid emote manifest");
   Path directory = CACHE.resolve(Integer.toString(manifest.version));
