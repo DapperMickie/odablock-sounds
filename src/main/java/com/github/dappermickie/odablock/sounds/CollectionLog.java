@@ -127,7 +127,7 @@ public class CollectionLog
 			if (lastColLogSettingWarning == -1 || client.getTickCount() - lastColLogSettingWarning > 16)
 			{
 				lastColLogSettingWarning = client.getTickCount();
-				sendHighlightedMessage("Please enable \"Collection log - New addition notification\" in your game settings for C Engineer to know when to announce it! (The chat message one, pop-up doesn't matter)");
+				sendHighlightedMessage("Please enable \"Collection log - New addition notification\" in your game settings for Odablock to know when to announce it! (The chat message one, pop-up doesn't matter)");
 			}
 		}
 	}
@@ -144,6 +144,12 @@ public class CollectionLog
 	public void onGameStateChanged(GameStateChanged event)
 	{
 		gameStateLoggedIn = event.getGameState() == GameState.LOGGED_IN;
+		if (event.getGameState() == GameState.LOGIN_SCREEN || event.getGameState() == GameState.HOPPING
+			|| event.getGameState() == GameState.LOGGING_IN)
+		{
+			pendingColLog = false;
+			colLogItem = null;
+		}
 	}
 
 	public void setlastColLogSettingWarning()

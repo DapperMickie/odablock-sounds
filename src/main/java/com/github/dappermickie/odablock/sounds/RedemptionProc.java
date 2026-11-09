@@ -67,7 +67,7 @@ public class RedemptionProc extends TimedSoundBase
 		int lastRedemptionProcTick = getLastPlayedTick();
 		if (redemptionHasProcced &&
 			lastRedemptionProcTick != currentTick &&
-			currentTick - lastRedemptionProcTick > getTickDelay())
+			(currentTick < lastRedemptionProcTick || currentTick - lastRedemptionProcTick > getTickDelay()))
 		{
 			setLastPlayedTickTick(-1);
 			redemptionHasProcced = false;

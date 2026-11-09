@@ -12,6 +12,7 @@ import com.github.dappermickie.odablock.sounds.CollectionLog;
 import com.github.dappermickie.odablock.sounds.CombatAchievements;
 import com.github.dappermickie.odablock.sounds.CoxSounds;
 import com.github.dappermickie.odablock.sounds.CryptSound;
+import com.github.dappermickie.odablock.sounds.ClientDisconnectSound;
 import com.github.dappermickie.odablock.sounds.CustomBarrowsFaces;
 import com.github.dappermickie.odablock.sounds.CustomBarrowsFacesOverlay;
 import net.runelite.client.ui.overlay.OverlayManager;
@@ -64,6 +65,7 @@ import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.Player;
 import net.runelite.api.events.ActorDeath;
+import net.runelite.api.events.AnimationChanged;
 import net.runelite.api.events.AreaSoundEffectPlayed;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.CommandExecuted;
@@ -73,6 +75,7 @@ import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.InteractingChanged;
 import net.runelite.api.events.MenuOptionClicked;
+import net.runelite.api.events.MenuOpened;
 import net.runelite.api.events.NpcDespawned;
 import net.runelite.api.events.NpcSpawned;
 import net.runelite.api.events.OverheadTextChanged;
@@ -124,7 +127,6 @@ public class OdablockPlugin extends Plugin
 
 	@Inject
 	private OkHttpClient okHttpClient;
-
 
 	// Start of sound injections
 	@Inject
@@ -242,6 +244,9 @@ public class OdablockPlugin extends Plugin
 	private CryptSound cryptSound;
 
 	@Inject
+	private ClientDisconnectSound clientDisconnectSound;
+
+	@Inject
 	private WelcomeScreenSound welcomeScreen;
 
 	@Inject
@@ -285,7 +290,6 @@ public class OdablockPlugin extends Plugin
 	private SoundOverridesPanel soundOverridesPanel;
 
 
-
 	private NavigationButton soundOverridesNavigationButton;
 
 	public static final String ODABLOCK = "Odablock";
@@ -293,16 +297,25 @@ public class OdablockPlugin extends Plugin
 	@Override
 	protected void startUp() throws Exception
 	{
-		clientThread.invoke(this::setupOldMaps);
-		achievementDiaries.setLastLoginTick(-1);
-		prayerDown.setLastLoginTick(-1);
+		soundEngine.startUp();
+		clientThread.invoke(() -> {
+			setupOldMaps();
+			clientDisconnectSound.reset(client.getGameState());
+			int loginTick = client.getGameState() == GameState.LOGGED_IN ? client.getTickCount() : -1;
+			levelUp.setLastLoginTick(loginTick);
+			achievementDiaries.setLastLoginTick(loginTick);
+			prayerDown.setLastLoginTick(loginTick);
+			livestreamManager.startUp();
+			notificationManager.startUp();
+		});
 		emoteHandler.loadEmotes();
 		SwingUtilities.invokeLater(this::setUpOverridesNavigation);
 		overlayManager.add(customBarrowsFacesOverlay);
 		executor.submit(() -> {
-			PlayerKillLineManager.Setup(okHttpClient);
+			PlayerKillLineManager.setup(okHttpClient);
 			SoundFileManager.ensureDownloadDirectoryExists();
 			SoundFileManager.downloadAllMissingSounds(okHttpClient);
+			SoundFileManager.downloadMissingBarrowsFaces(okHttpClient);
 			SnowballUserManager.ensureDownloadDirectoryExists();
 			SnowballUserManager.downloadSnowballUsers(okHttpClient);
 			customBarrowsFaces.reloadImages();
@@ -315,9 +328,14 @@ public class OdablockPlugin extends Plugin
 		tfaChestLight.reset();
 		levelUp.clear();
 		achievementDiaries.clearOldAchievementDiaries();
-		clientThread.invoke(odablockWarriors::shutDown);
+		clientThread.invoke(() -> {
+			odablockWarriors.shutDown();
+			livestreamManager.shutDown();
+			notificationManager.shutDown();
+			customBarrowsFaces.shutDown();
+		});
 		soundEngine.close();
-		customBarrowsFaces.shutDown();
+		chatRightClickManager.clear();
 		overlayManager.remove(customBarrowsFacesOverlay);
 		SwingUtilities.invokeLater(this::removeOverridesNavigation);
 	}
@@ -394,8 +412,14 @@ public class OdablockPlugin extends Plugin
 	@Subscribe
 	public void onGameStateChanged(GameStateChanged event)
 	{
+		clientDisconnectSound.onGameStateChanged(event);
 		tfaChestLight.onGameStateChanged(event);
 		collectionLog.onGameStateChanged(event);
+		if (event.getGameState() != GameState.LOGGED_IN && event.getGameState() != GameState.LOADING)
+		{
+			soundEngine.stopManagedClip();
+			customBarrowsFaces.resetAnimation();
+		}
 		switch (event.getGameState())
 		{
 			case LOGIN_SCREEN:
@@ -407,7 +431,6 @@ public class OdablockPlugin extends Plugin
 			case CONNECTION_LOST:
 				// set to -1 here in-case of race condition with varbits changing before this handler is called
 				// when game state becomes LOGGED_IN
-				//soundEngine.playClip(Sound.CLIENT_DISCONNECTS, executor);
 				livestreamManager.resetStateForWorldHopOrLogin();
 				notificationManager.resetStateForWorldHopOrLogin();
 
@@ -436,7 +459,6 @@ public class OdablockPlugin extends Plugin
 	{
 		death.onActorDeath(actorDeath);
 	}
-
 
 	@Subscribe
 	public void onChatMessage(ChatMessage chatMessage)
@@ -517,9 +539,16 @@ public class OdablockPlugin extends Plugin
 		turnOnRun.onVarbitChanged(event);
 		dhAxe.onVarbitChanged(event);
 		tobChestLight.onVarbitChanged(event);
+		tfaChestLight.onVarbitChanged(event);
 		collectionLog.onVarbitChanged(event);
 		achievementDiaries.onVarbitChanged(event);
 		killingPlayer.onVarbitChanged(event);
+	}
+
+	@Subscribe
+	public void onMenuOpened(MenuOpened event)
+	{
+		chatRightClickManager.onMenuOpened(event);
 	}
 
 	@Subscribe
@@ -572,9 +601,16 @@ public class OdablockPlugin extends Plugin
 	}
 
 	@Subscribe
+	public void onAnimationChanged(AnimationChanged event)
+	{
+		tfaChestLight.onAnimationChanged(event);
+	}
+
+	@Subscribe
 	public void onNpcSpawned(NpcSpawned npcSpawned)
 	{
 		randomEventSpawned.onNpcSpawned(npcSpawned);
+		tfaChestLight.onNpcSpawned(npcSpawned);
 	}
 
 	@Subscribe
@@ -608,13 +644,25 @@ public class OdablockPlugin extends Plugin
 		{
 			collectionLog.onConfigChanged(event);
 			clientThread.invoke(() -> odablockWarriors.onConfigChanged(event.getKey()));
+			if (event.getKey().equals("announcementVolume") && config.announcementVolume() <= 0)
+			{
+				soundEngine.stopManagedClip();
+			}
+			if (event.getKey().equals("livestream"))
+			{
+				clientThread.invoke(livestreamManager::resetStateForWorldHopOrLogin);
+			}
+			if (event.getKey().equals("notifications"))
+			{
+				clientThread.invoke(notificationManager::resetStateForWorldHopOrLogin);
+			}
 			if (event.getKey().equals("showSidebar"))
 			{
 				SwingUtilities.invokeLater(this::setUpOverridesNavigation);
 			}
 			if (event.getKey().startsWith("customBarrows"))
 			{
-				customBarrowsFaces.reloadImages();
+				executor.submit(customBarrowsFaces::reloadImages);
 			}
 		}
 	}
@@ -633,6 +681,10 @@ public class OdablockPlugin extends Plugin
 			return;
 		}
 		final Player local = client.getLocalPlayer();
+		if (local == null)
+		{
+			return;
+		}
 		int currentTick = client.getTickCount();
 
 		redemptionProc.onTick(currentTick, local);
@@ -645,7 +697,6 @@ public class OdablockPlugin extends Plugin
 		randomEventSpawned.onGameTick(event);
 		livestreamManager.onGameTick(event);
 		notificationManager.onGameTick(event);
-		chatRightClickManager.onGameTick(event);
 		collectionLog.onGameTick(event);
 		pet.onGameTick(event);
 		customBarrowsFaces.onGameTick();
@@ -733,9 +784,6 @@ public class OdablockPlugin extends Plugin
 	public void onCommandExecuted(CommandExecuted event)
 	{
 		emoteHandler.onCommandExecuted(event);
-		//if(event.getCommand().equals("loadwarrior")) {
-		//	odablockWarriors.onWidgetLoaded(null);
-		//}
 	}
 
 	public static int TO_GROUP(int id)

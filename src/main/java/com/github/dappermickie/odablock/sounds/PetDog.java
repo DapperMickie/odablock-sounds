@@ -40,7 +40,7 @@ public class PetDog
 		int currentTick = client.getTickCount();
 		Player local = client.getLocalPlayer();
 		// Petting the dog sound, only play sound when message is sent by local player within 15ticks of petting the dog
-		if (config.petDog() &&
+		if (config.petDog() && local != null &&
 			// pet dog message
 			Text.standardize(chatMessage.getMessage()).equals(messageByClient) &&
 			// sent by current local user

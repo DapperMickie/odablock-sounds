@@ -1,12 +1,10 @@
 package com.github.dappermickie.odablock;
 
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.RuneLite;
@@ -25,7 +23,7 @@ public abstract class SnowballUserManager
 	private static final String USERVERSION_FILENAME = "USERVERSION";
 	private static final String USERS_FILENAME = "users.txt";
 
-	private static String[] users = null;
+	private static volatile String[] users;
 
 	public static void ensureDownloadDirectoryExists()
 	{
@@ -35,63 +33,60 @@ public abstract class SnowballUserManager
 		}
 	}
 
-	public static void downloadSnowballUsers(final OkHttpClient okHttpClient)
+	public static synchronized void downloadSnowballUsers(final OkHttpClient okHttpClient)
 	{
+		ensureDownloadDirectoryExists();
 		HttpUrl versionUrl = RAW_GITHUB.newBuilder().addPathSegment(USERVERSION_FILENAME).build();
-		int latestVersion = -1;
-		try (Response res = okHttpClient.newCall(new Request.Builder().url(versionUrl).build()).execute())
-		{
-			if (res.body() != null)
-			{
-				latestVersion = Integer.parseInt(Text.standardize(res.body().string()));
-			}
-		}
-		catch (IOException e)
-		{
-			log.error("Odablock Plugin could not download user version", e);
-			return;
-		}
-
-		int currentVersion = -1;
+		Path temporary = null;
 		try
 		{
-			currentVersion = getUserVersion();
-		}
-		catch (IOException e)
-		{
-			// No current version available
-			var soundVersionFile = new File(DOWNLOAD_DIR, USERVERSION_FILENAME);
+			int latestVersion;
+			try (Response res = okHttpClient.newCall(new Request.Builder().url(versionUrl).build()).execute())
+			{
+				if (!res.isSuccessful() || res.body() == null)
+				{
+					return;
+				}
+				latestVersion = Integer.parseInt(res.body().string().trim());
+			}
+			int currentVersion = -1;
 			try
 			{
-				soundVersionFile.createNewFile();
-
+				currentVersion = getUserVersion();
 			}
-			catch (IOException e2)
+			catch (IOException | NumberFormatException ignored)
 			{
-				log.error("Couldn't create userversion file");
 			}
-		}
-
-		if (latestVersion == currentVersion)
-		{
-			return;
-		}
-
-		writeLatestVersion(latestVersion);
-
-		HttpUrl usersUrl = RAW_GITHUB.newBuilder().addPathSegment(USERS_FILENAME).build();
-		Path outputPath = Paths.get(DOWNLOAD_DIR.getPath(), USERS_FILENAME);
-		try (Response res = okHttpClient.newCall(new Request.Builder().url(usersUrl).build()).execute())
-		{
-			if (res.body() != null)
+			Path destination = DOWNLOAD_DIR.toPath().resolve(USERS_FILENAME);
+			if (latestVersion == currentVersion && Files.isRegularFile(destination))
 			{
-				Files.copy(new BufferedInputStream(res.body().byteStream()), outputPath, StandardCopyOption.REPLACE_EXISTING);
+				return;
+			}
+			HttpUrl usersUrl = RAW_GITHUB.newBuilder().addPathSegment(USERS_FILENAME).build();
+			try (Response res = okHttpClient.newCall(new Request.Builder().url(usersUrl).build()).execute())
+			{
+				if (!res.isSuccessful() || res.body() == null)
+				{
+					return;
+				}
+				temporary = Files.createTempFile(DOWNLOAD_DIR.toPath(), "users-", ".tmp");
+				Files.copy(res.body().byteStream(), temporary, StandardCopyOption.REPLACE_EXISTING);
+				Files.move(temporary, destination, StandardCopyOption.REPLACE_EXISTING);
+				users = null;
+				writeLatestVersion(latestVersion);
 			}
 		}
-		catch (IOException e)
+		catch (IOException | NumberFormatException e)
 		{
-			log.error("Odablock Plugin could not download snowball users", e);
-			return;
+			log.warn("Odablock Plugin could not update snowball users", e);
+		}
+		finally
+		{
+			if (temporary != null)
+			{
+				try { Files.deleteIfExists(temporary); }
+				catch (IOException e) { log.debug("Could not remove temporary user download", e); }
+			}
 		}
 	}
 
@@ -119,7 +114,7 @@ public abstract class SnowballUserManager
 		}
 		catch (IOException e)
 		{
-			return null;
+			return new String[0];
 		}
 	}
 
@@ -127,7 +122,7 @@ public abstract class SnowballUserManager
 	{
 		File userVersionFile = new File(DOWNLOAD_DIR, USERVERSION_FILENAME);
 		String userVersionFileContent = Files.readString(userVersionFile.toPath());
-		return Integer.parseInt(userVersionFileContent);
+		return Integer.parseInt(userVersionFileContent.trim());
 	}
 
 	private static void writeLatestVersion(int version)

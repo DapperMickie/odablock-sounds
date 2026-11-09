@@ -33,7 +33,7 @@ public class HairDresser
 
 	public void onWidgetLoaded(WidgetLoaded event)
 	{
-		if (!config.hairDresser())
+		if (!config.hairDresser() || client.getLocalPlayer() == null)
 		{
 			return;
 		}

@@ -36,15 +36,20 @@ public class SoundEngine
 
 	private final Object managedClipLock = new Object();
 	private Clip managedClip;
+	private long managedRequest;
+	private volatile boolean active = true;
+	private volatile long lifecycle;
 
 	public void playClip(Sound sound, Executor executor)
 	{
-		executor.execute(() -> playClipInternal(sound));
+		long session = lifecycle;
+		executor.execute(() -> { if (active && lifecycle == session) playClipInternal(sound); });
 	}
 
 	public void playClip(Sound sound, ScheduledExecutorService executor, Duration initialDelay)
 	{
-		executor.schedule(() -> playClipInternal(sound), initialDelay.toMillis(), TimeUnit.MILLISECONDS);
+		long session = lifecycle;
+		executor.schedule(() -> { if (active && lifecycle == session) playClipInternal(sound); }, initialDelay.toMillis(), TimeUnit.MILLISECONDS);
 	}
 
 	public void playFile(File file, Executor executor)
@@ -53,12 +58,13 @@ public class SoundEngine
 		{
 			return;
 		}
-		executor.execute(() -> playFileInternal(file));
+		long session = lifecycle;
+		executor.execute(() -> { if (active && lifecycle == session) playFileInternal(file); });
 	}
 
 	private void playFileInternal(File file)
 	{
-		if (SoundFileManager.getIsUpdating())
+		if (!active || config.announcementVolume() <= 0 || SoundFileManager.getIsUpdating())
 		{
 			return;
 		}
@@ -68,7 +74,7 @@ public class SoundEngine
 		{
 			audioPlayer.play(file, gain);
 		}
-		catch (IOException | UnsupportedAudioFileException | LineUnavailableException exception)
+		catch (IOException | UnsupportedAudioFileException | LineUnavailableException | IllegalArgumentException exception)
 		{
 			log.warn("Failed to preview sound {}", file.getName(), exception);
 		}
@@ -76,7 +82,7 @@ public class SoundEngine
 
 	private void playClipInternal(Sound sound)
 	{
-		if (SoundFileManager.getIsUpdating())
+		if (!active || config.announcementVolume() <= 0 || SoundFileManager.getIsUpdating())
 		{
 			return;
 		}
@@ -105,7 +111,7 @@ public class SoundEngine
 		{
 			log.warn("Failed to play Odablock sound " + sound, e);
 		}
-		catch (LineUnavailableException e)
+		catch (LineUnavailableException | IllegalArgumentException e)
 		{
 			log.warn("Failed to play Odablock sound " + sound, e);
 		}
@@ -113,31 +119,48 @@ public class SoundEngine
 
 	public void playManagedClip(Sound sound, Executor executor)
 	{
-		executor.execute(() -> playManagedClipInternal(sound));
+		final long request;
+		synchronized (managedClipLock)
+		{
+			request = ++managedRequest;
+		}
+		executor.execute(() -> playManagedClipInternal(sound, request));
 	}
 
 	public void stopManagedClip()
 	{
+		Clip previous;
 		synchronized (managedClipLock)
 		{
-			if (managedClip != null)
-			{
-				managedClip.stop();
-				managedClip.close();
-				managedClip = null;
-			}
+			++managedRequest;
+			previous = managedClip;
+			managedClip = null;
+		}
+		closeClip(previous);
+	}
+
+	private static void closeClip(Clip clip)
+	{
+		if (clip != null)
+		{
+			clip.stop();
+			clip.close();
 		}
 	}
 
-	private void playManagedClipInternal(Sound sound)
+	private void playManagedClipInternal(Sound sound, long request)
 	{
-		if (SoundFileManager.getIsUpdating())
+		synchronized (managedClipLock)
 		{
-			return;
+			if (request != managedRequest || !active || config.announcementVolume() <= 0
+				|| SoundFileManager.getIsUpdating())
+			{
+				return;
+			}
 		}
 
-		float gain = 20f * (float) Math.log10(config.announcementVolume() / 100f);
-
+		Clip clip = null;
+		boolean published = false;
 		try
 		{
 			File soundFile = resolveSoundFile(sound).orElse(null);
@@ -147,57 +170,66 @@ public class SoundEngine
 				return;
 			}
 
-			try (AudioInputStream audioInputStream = AudioSystem.getAudioInputStream(soundFile))
+			try (AudioInputStream stream = AudioSystem.getAudioInputStream(soundFile))
 			{
-				Clip clip = AudioSystem.getClip();
-				clip.open(audioInputStream);
-
-				try
-				{
-					var control = (javax.sound.sampled.FloatControl) clip.getControl(javax.sound.sampled.FloatControl.Type.MASTER_GAIN);
-					control.setValue(gain);
-				}
-				catch (Exception e)
-				{
-					log.warn("Failed to set managed clip gain: {}", e.getMessage());
-				}
-
-				synchronized (managedClipLock)
-				{
-					if (managedClip != null)
-					{
-						managedClip.stop();
-						managedClip.close();
-					}
-
-					managedClip = clip;
-					clip.addLineListener(event ->
-					{
-						if (event.getType() != javax.sound.sampled.LineEvent.Type.STOP)
-						{
-							return;
-						}
-
-						synchronized (managedClipLock)
-						{
-							if (managedClip == clip)
-							{
-								clip.close();
-								managedClip = null;
-							}
-						}
-					});
-					clip.start();
-				}
+				clip = AudioSystem.getClip();
+				clip.open(stream);
 			}
+			try
+			{
+				var control = (javax.sound.sampled.FloatControl) clip.getControl(javax.sound.sampled.FloatControl.Type.MASTER_GAIN);
+				float gain = 20f * (float) Math.log10(config.announcementVolume() / 100f);
+				control.setValue(Math.max(control.getMinimum(), Math.min(control.getMaximum(), gain)));
+			}
+			catch (IllegalArgumentException e)
+			{
+				log.debug("Managed clip gain is not supported", e);
+			}
+
+			final Clip openedClip = clip;
+			clip.addLineListener(event -> {
+				if (event.getType() == javax.sound.sampled.LineEvent.Type.STOP)
+				{
+					synchronized (managedClipLock)
+					{
+						if (managedClip == openedClip)
+						{
+							managedClip = null;
+						}
+					}
+					openedClip.close();
+				}
+			});
+
+			Clip previous;
+			synchronized (managedClipLock)
+			{
+				// A stop, newer selection, or shutdown may arrive while audio is decoding.
+				if (!active || request != managedRequest || config.announcementVolume() <= 0)
+				{
+					return;
+				}
+				previous = managedClip;
+				managedClip = clip;
+				clip.start();
+				published = true;
+			}
+			closeClip(previous);
 		}
-		catch (FileNotFoundException e)
-		{
-			log.warn("Sound file not found for {}", sound, e);
-		}
-		catch (IOException | UnsupportedAudioFileException | LineUnavailableException e)
+		catch (IOException | UnsupportedAudioFileException | LineUnavailableException | IllegalArgumentException e)
 		{
 			log.warn("Failed to play managed Odablock sound {}", sound, e);
+		}
+		finally
+		{
+			if (!published && clip != null)
+			{
+				synchronized (managedClipLock)
+				{
+					if (managedClip == clip) managedClip = null;
+				}
+				clip.close();
+			}
 		}
 	}
 
@@ -218,8 +250,15 @@ public class SoundEngine
 		return Optional.ofNullable(soundFile);
 	}
 
+	public void startUp()
+	{
+		active = true;
+	}
+
 	public void close()
 	{
+		active = false;
+		lifecycle++;
 		stopManagedClip();
 	}
 }

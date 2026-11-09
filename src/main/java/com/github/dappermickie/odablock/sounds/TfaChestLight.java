@@ -14,15 +14,21 @@ import net.runelite.api.Player;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
+import net.runelite.api.events.VarbitChanged;
+import net.runelite.api.events.NpcSpawned;
+import net.runelite.api.events.AnimationChanged;
+import net.runelite.api.gameval.AnimationID;
 import net.runelite.api.gameval.NpcID;
 import net.runelite.api.gameval.SpotanimID;
+import net.runelite.api.gameval.VarbitID;
 
 @Singleton
 public class TfaChestLight
 {
 	// Loot room template region, also used by the TFA Plugin Hub plugin's RaidRoom.
 	private static final int LOOT_REGION = 16474;
-	private static final int OWN_CHEST_VARBIT = 16433;
+	private static final int STANDARD_CHEST_COUNT = 8;
+	private static final int OWN_CHEST_VARBIT = VarbitID.TFA_VAULT_OWN_CHEST;
 
 	private final Client client;
 	private final OdablockConfig config;
@@ -30,8 +36,6 @@ public class TfaChestLight
 	private final ScheduledExecutorService executor;
 
 	private boolean chestsHandled;
-	private boolean rewardsSeen;
-	private boolean uniqueChestClosedSeen;
 	private boolean uniqueChestOpeningHandled;
 
 	@Inject
@@ -46,21 +50,62 @@ public class TfaChestLight
 
 	public void onGameTick(GameTick event)
 	{
-		Player player = client.getLocalPlayer();
-		if (client.getGameState() != GameState.LOGGED_IN || player == null || player.getLocalLocation() == null)
+		updateChestState();
+	}
+
+	public void onVarbitChanged(VarbitChanged event)
+	{
+		int id = event.getVarbitId();
+		if (id == OWN_CHEST_VARBIT || (id >= VarbitID.TFA_VAULT_CHEST_0_STATE
+			&& id <= VarbitID.TFA_VAULT_CHEST_7_STATE))
+		{
+			updateChestState();
+		}
+	}
+
+	public void onNpcSpawned(NpcSpawned event)
+	{
+		NPC npc = event.getNpc();
+		if (npc != null && (isUniqueChest(npc) || isStandardChest(npc)))
+		{
+			updateChestState();
+		}
+	}
+
+	public void onAnimationChanged(AnimationChanged event)
+	{
+		if (!(event.getActor() instanceof NPC) || !isInLootRoom())
 		{
 			return;
 		}
-
-		if (WorldPoint.fromLocalInstance(client, player.getLocalLocation()).getRegionID() != LOOT_REGION)
+		NPC npc = (NPC) event.getActor();
+		if (isUniqueChest(npc) && isOpeningAnimation(npc.getAnimation()))
 		{
-			reset();
+			playOpeningSound();
+		}
+	}
+
+	private boolean isInLootRoom()
+	{
+		Player player = client.getLocalPlayer();
+		return client.getGameState() == GameState.LOGGED_IN && player != null
+			&& player.getLocalLocation() != null
+			&& WorldPoint.fromLocalInstance(client, player.getLocalLocation()).getRegionID() == LOOT_REGION;
+	}
+
+	private void updateChestState()
+	{
+		if (!isInLootRoom())
+		{
+			if (client.getGameState() == GameState.LOGGED_IN)
+			{
+				reset();
+			}
 			return;
 		}
 
 		boolean ownChest = client.getVarbitValue(OWN_CHEST_VARBIT) > 0;
-		boolean uniqueChest = false;
-		boolean uniqueChestOpen = false;
+		int standardChests = 0;
 		for (NPC npc : client.getNpcs())
 		{
 			// The eight standard chests transform according to ownership and opened state.
@@ -73,17 +118,18 @@ public class TfaChestLight
 			if (id >= NpcID.TFA_REWARDS_CHEST_VAULT_CLOSED_NOTMINE
 				&& id <= NpcID.TFA_REWARDS_CHEST_VAULT_OPEN_MINE)
 			{
+				standardChests++;
 				ownChest |= npc.hasSpotAnim(SpotanimID.VFX_TFA_SMALL_CHEST_SPARKLES);
 			}
 			switch (id)
 			{
 				case NpcID.TFA_UNIQUE_CHEST_VAULT_CLOSED:
-					uniqueChest = true;
-					uniqueChestClosedSeen = true;
+					if (isOpeningAnimation(npc.getAnimation()))
+					{
+						playOpeningSound();
+					}
 					break;
 				case NpcID.TFA_UNIQUE_CHEST_VAULT_OPEN:
-					uniqueChest = true;
-					uniqueChestOpen = true;
 					break;
 				case NpcID.TFA_REWARDS_CHEST_VAULT_CLOSED_MINE:
 				case NpcID.TFA_REWARDS_CHEST_VAULT_OPEN_MINE:
@@ -92,33 +138,16 @@ public class TfaChestLight
 			}
 		}
 
-		// The reveal and opening are separate events. Keep watching after the reveal,
-		// and require a closed chest first so loading an already-open chest is silent.
-		if (uniqueChestOpen && uniqueChestClosedSeen && !uniqueChestOpeningHandled)
-		{
-			uniqueChestOpeningHandled = true;
-			if (config.tfaPurpleChestOpens())
-			{
-				soundEngine.playClip(Sound.TOA_CHEST_OPENS, executor);
-			}
-		}
-
 		if (chestsHandled)
 		{
 			return;
 		}
 
-		if (!ownChest && !uniqueChest)
+		// White is known as soon as ownership/sparkles appear. Once all eight
+		// standard chests are loaded, their lack of ownership/sparkles means purple;
+		// do not wait for the unique chest or its reveal animation.
+		if (!ownChest && standardChests < STANDARD_CHEST_COUNT)
 		{
-			rewardsSeen = false;
-			return;
-		}
-
-		// Wait for the reveal to settle before deciding ownership.
-		// Unrevealed standard chests alone never establish a purple reward.
-		if (!rewardsSeen)
-		{
-			rewardsSeen = true;
 			return;
 		}
 
@@ -133,6 +162,39 @@ public class TfaChestLight
 		else if (config.tfaWhiteChest())
 		{
 			soundEngine.playClip(Sound.WHITE_LIGHT_AFTER_RAID, executor);
+		}
+	}
+
+	private boolean isUniqueChest(NPC npc)
+	{
+		NPCComposition composition = npc.getTransformedComposition();
+		int id = composition == null ? npc.getId() : composition.getId();
+		return id == NpcID.TFA_UNIQUE_CHEST_VAULT_CLOSED || id == NpcID.TFA_UNIQUE_CHEST_VAULT_OPEN;
+	}
+
+	private boolean isStandardChest(NPC npc)
+	{
+		NPCComposition composition = npc.getTransformedComposition();
+		int id = composition == null ? npc.getId() : composition.getId();
+		return id >= NpcID.TFA_REWARDS_CHEST_VAULT_CLOSED_NOTMINE
+			&& id <= NpcID.TFA_REWARDS_CHEST_VAULT_OPEN_MINE;
+	}
+
+	private static boolean isOpeningAnimation(int animation)
+	{
+		return animation == AnimationID.CHEST_GUTHIXIAN01_OPEN
+			|| animation == AnimationID.CHEST_GUTHIXIAN02_OPEN01;
+	}
+
+	private void playOpeningSound()
+	{
+		if (!uniqueChestOpeningHandled)
+		{
+			uniqueChestOpeningHandled = true;
+			if (config.tfaPurpleChestOpens())
+			{
+				soundEngine.playClip(Sound.TOA_CHEST_OPENS, executor);
+			}
 		}
 	}
 
@@ -151,8 +213,6 @@ public class TfaChestLight
 	public void reset()
 	{
 		chestsHandled = false;
-		rewardsSeen = false;
-		uniqueChestClosedSeen = false;
 		uniqueChestOpeningHandled = false;
 	}
 }

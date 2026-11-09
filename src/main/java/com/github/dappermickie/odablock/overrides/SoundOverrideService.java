@@ -40,7 +40,7 @@ public class SoundOverrideService
 	@Inject
 	private Gson gson;
 
-	public Optional<File> getRandomOverrideFile(final String poolDirectory)
+	public synchronized Optional<File> getRandomOverrideFile(final String poolDirectory)
 	{
 		final Set<String> selectedKeys = getOverrideFileNames(poolDirectory);
 		if (selectedKeys.isEmpty())
@@ -66,7 +66,7 @@ public class SoundOverrideService
 		return Optional.of(validOverrideFiles.get(selectedIndex));
 	}
 
-	public Set<String> getOverrideFileNames(final String poolDirectory)
+	public synchronized Set<String> getOverrideFileNames(final String poolDirectory)
 	{
 		Map<String, LinkedHashSet<String>> overridePools = loadOverridePools();
 		LinkedHashSet<String> rawValues = overridePools.getOrDefault(poolDirectory, new LinkedHashSet<>());
@@ -95,7 +95,7 @@ public class SoundOverrideService
 		return Collections.unmodifiableSet(sanitized);
 	}
 
-	public void setOverrideFileNames(final String poolDirectory, final Collection<String> storageKeys)
+	public synchronized void setOverrideFileNames(final String poolDirectory, final Collection<String> storageKeys)
 	{
 		Map<String, LinkedHashSet<String>> overridePools = loadOverridePools();
 		LinkedHashSet<String> sanitized = sanitizeStorageKeys(
@@ -116,7 +116,7 @@ public class SoundOverrideService
 		writeOverridePools(overridePools);
 	}
 
-	public void sanitizePersistedOverrides(final boolean refreshCache)
+	public synchronized void sanitizePersistedOverrides(final boolean refreshCache)
 	{
 		Map<String, LinkedHashSet<String>> overridePools = loadOverridePools();
 		Map<String, LinkedHashSet<String>> sanitizedPools = new LinkedHashMap<>();
@@ -159,19 +159,19 @@ public class SoundOverrideService
 		}
 	}
 
-	public void clearOverrideFileNames(final String poolDirectory)
+	public synchronized void clearOverrideFileNames(final String poolDirectory)
 	{
 		Map<String, LinkedHashSet<String>> overridePools = loadOverridePools();
 		overridePools.remove(poolDirectory);
 		writeOverridePools(overridePools);
 	}
 
-	public void clearAllOverrides()
+	public synchronized void clearAllOverrides()
 	{
 		writeOverridePools(new LinkedHashMap<>());
 	}
 
-	public String exportOverridesAsJson()
+	public synchronized String exportOverridesAsJson()
 	{
 		Map<String, LinkedHashSet<String>> pools = loadOverridePools();
 		Map<String, List<String>> export = new LinkedHashMap<>();
@@ -186,13 +186,13 @@ public class SoundOverrideService
 		return gson.toJson(export);
 	}
 
-	public ImportResult importOverridesFromJson(final String json) throws JsonSyntaxException
+	public synchronized ImportResult importOverridesFromJson(final String json) throws JsonSyntaxException
 	{
 		Map<String, List<String>> incoming = parseOverrideJson(json);
 		return applyImportedOverrides(incoming, false);
 	}
 
-	public ImportResult replaceAllOverridesFromJson(final String json) throws JsonSyntaxException
+	public synchronized ImportResult replaceAllOverridesFromJson(final String json) throws JsonSyntaxException
 	{
 		Map<String, List<String>> incoming = parseOverrideJson(json);
 		return applyImportedOverrides(incoming, true);
@@ -291,7 +291,7 @@ public class SoundOverrideService
 		}
 	}
 
-	public Set<String> getDefaultStorageKeys(final String poolDirectory, final boolean refreshCache)
+	public synchronized Set<String> getDefaultStorageKeys(final String poolDirectory, final boolean refreshCache)
 	{
 		List<File> defaultFiles = SoundFileManager.listFilesInDirectory(poolDirectory, refreshCache);
 		LinkedHashSet<String> keys = new LinkedHashSet<>();
@@ -302,7 +302,7 @@ public class SoundOverrideService
 		return keys;
 	}
 
-	public List<SoundOverrideOption> getAllSoundOptions(final String poolDirectory, final boolean refreshCache)
+	public synchronized List<SoundOverrideOption> getAllSoundOptions(final String poolDirectory, final boolean refreshCache)
 	{
 		Set<String> uniqueDirectories = new TreeSet<>();
 		for (Sound sound : Sound.values())
@@ -510,7 +510,9 @@ public class SoundOverrideService
 			fileName = storageKey.substring(separatorIndex + 1).trim();
 		}
 
-		if (directory.isEmpty() || fileName.isEmpty() || fileName.contains("/"))
+		if ((!SoundFileManager.CUSTOM_DIRECTORY.equals(directory) && !SoundPools.allDirectories().contains(directory))
+			|| fileName.isEmpty() || fileName.contains("/") || fileName.contains("\\")
+			|| !fileName.toLowerCase(Locale.ROOT).endsWith(".wav"))
 		{
 			return null;
 		}

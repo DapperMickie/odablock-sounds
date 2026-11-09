@@ -13,6 +13,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
+import net.runelite.api.ObjectComposition;
 import net.runelite.api.Varbits;
 import net.runelite.api.events.GameObjectDespawned;
 import net.runelite.api.events.GameObjectSpawned;
@@ -72,7 +73,13 @@ public class TobChestLight
 		int objId = event.getGameObject().getId();
 		if (REWARD_CHEST_IDS.contains(objId))
 		{
-			int impostorId = client.getObjectDefinition(objId).getImpostor().getId();
+			ObjectComposition definition = client.getObjectDefinition(objId);
+			ObjectComposition impostor = definition == null ? null : definition.getImpostor();
+			if (impostor == null)
+			{
+				return;
+			}
+			int impostorId = impostor.getId();
 
 			if (impostorId == YOUR_TOB_CHEST_PURPLE_OBJ)
 			{
@@ -174,7 +181,7 @@ public class TobChestLight
 		{
 			isMine = false;
 			isPurple = false;
-			loadedObjectCount--;
+			loadedObjectCount = Math.max(0, loadedObjectCount - 1);
 		}
 	}
 }

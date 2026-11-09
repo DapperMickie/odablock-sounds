@@ -52,7 +52,7 @@ public enum Sound
 	// Achievements & Milestones
 	LEVEL_UP("levelup", "LevelUpCompleted_r1.wav"),
 	REGULAR_GAMON("regulargamon", "Regular_Gamon.wav"),
-	Big_Gamon("biggamon", "Big_Gamon.wav"),
+	BIG_GAMON("biggamon", "Big_Gamon.wav"),
 	QUEST("quest", "QuestCompleted_r1.wav"),
 	COLLECTION_LOG_SLOT("collectionlog", "ColLogSlotCompleted_r1.wav"),
 	ACHIEVEMENT_DIARY("achievementdiary", "AchievementDiary_r1.wav"),
@@ -69,7 +69,8 @@ public enum Sound
 	DECLINE_TRADE("declinetrade", "DeclineTrade.wav"),
 	DISMISSING_RANDOM_EVENT("dismissrandomevent", "DismissingRandomEvent.wav"),
 	DISMISSING_RANDOM_EVENT_2("dismissrandomevent", "Snowball_r1.wav"),
-	GETTING_RAGGED("gettingragged", "GettingRagged_r2.wav"),
+	GETTING_RAGGED("gettingragged", "GettingRagged.wav"),
+	GETTING_RAGGED_2("gettingragged", "GettingRagged_r2.wav"),
 	PHOENIX_NECKLACE("phoenixnecklace", "PhoenixNecklace.wav"),
 	PETTING_DOG("pettingdog", "PettingDog.wav"),
 	EASTER_EGG_STRAYDOG_BONE("givebone", "GiveBone.wav"),

@@ -52,18 +52,35 @@ Once your files are in the `custom` folder, open the **Sound Overrides** panel i
 
 - **Sound doesn't play?** Make sure the event plays the default sound first. If it doesn't, the issue is in our plugin or your _in-game_ settings (e.g., collection log notifications must be enabled in-game).
 - **File not showing in the picker?** Confirm it's a valid `.wav` file and is inside the `custom` folder. Restart the client if needed.
-- **Want to reset everything?** Delete the `odablock-sounds` folder and reload your client. All defaults will re-download and a fresh `custom` folder will be created.
+- **Want to reset everything?** Delete the `odablock-sounds` folder and reload your client. Back up your `custom` folder first; deleting it also deletes your own sounds. All defaults will re-download.
+
+### Client disconnect sound
+
+**General > Client Disconnect** plays once when the game loses its server connection,
+even though RuneLite itself remains running. It is enabled by default. Normal logout
+and world hopping are silent, and reconnect retries do not repeat the sound.
 
 ### Music player tracks
 
 Enable **Odablock Warriors** and/or **Terry** under **Music & Emotes** to add separate
-entries at the bottom of the in-game music player. Use **Play** or **Stop** on each
-entry. Selecting a normal game track stops the plugin song; all original tracks,
+entries at the bottom of the in-game music player. Left-click an entry to **Play**, or right-click it and choose **Stop**. Selecting a normal game track stops the plugin song; all original tracks,
 including **7th Realm**, remain available. Disabling a track removes its entry.
 
-Terry - Odablock X @ACRAZEOFFICIAL uses `terry/Terry.wav` on the `sounds-v2` branch.
-Both songs use the existing sound downloader; Terry will be available once that file is uploaded.
+Terry - Odablock X @ACRAZEOFFICIAL uses `terry/Terry.wav` on the `sounds-v3` branch.
+Both songs use the existing sound downloader; the release asset catalog includes Terry.
 Both songs use the plugin's announcement volume.
+
+### TFA chest opening
+
+**The Fractured Archive > Opening the Chest** plays the existing "Please GAGECK"
+sound once when a party member starts opening the purple chest. It is independent of the
+white/purple reward settings, which announce as soon as the reward can be identified.
+
+### Barrows faces
+
+Standard face images download automatically into `odablock-sounds/odafaces/`.
+Additional `custom_face_*.png` files can be placed there. If an image is missing,
+the normal game face remains visible.
 
 ### Legacy Custom Folders
 
@@ -74,7 +91,7 @@ ___
 
 ### Currently implemented sounds include
 
-You can find all the sound files [here](https://github.com/DapperMickie/odablock-sounds/tree/sounds-v2) and all the code [here](https://github.com/DapperMickie/odablock-sounds/tree/master/src/main/java/com/github/dappermickie/odablock/sounds).
+You can find all the sound files [here](https://github.com/DapperMickie/odablock-sounds/tree/sounds-v3) and all the code [here](https://github.com/DapperMickie/odablock-sounds/tree/master/src/main/java/com/github/dappermickie/odablock/sounds).
 
 ### Systems
 

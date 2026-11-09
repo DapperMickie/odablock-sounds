@@ -54,7 +54,8 @@ public class SnowBalled
 		}
 
 		int currentTick = client.getTickCount();
-		if (currentTick - lastSnowballTriggerTick < 50) // 30s cool down
+		if (lastSnowballTriggerTick >= 0 && currentTick >= lastSnowballTriggerTick
+			&& currentTick - lastSnowballTriggerTick < 50) // 30s cool down
 		{
 			return;
 		}
@@ -82,7 +83,7 @@ public class SnowBalled
 			WorldPoint projectileWP = WorldPoint.fromLocal(client, projectile.getX1(), projectile.getY1(), playerWp.getPlane()); // we don't care about plane
 
 			// check snowball is *roughly* from the players tile, while allowing for drive-by/moving while the projectile spawns
-			if (playerWp.distanceTo2D(projectileWP) <= 2)
+			if (projectileWP != null && playerWp.distanceTo2D(projectileWP) <= 2)
 			{
 				lastSnowballTriggerTick = currentTick;
 				soundEngine.playClip(Sound.SNOWBALL_1, executor);
@@ -90,6 +91,7 @@ public class SnowBalled
 				{
 					client.addChatMessage(ChatMessageType.PUBLICCHAT, ODABLOCK, player.getName() + " already kicked you!", null);
 				}
+				return;
 			}
 		}
 	}

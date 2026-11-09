@@ -85,6 +85,18 @@ public interface OdablockConfig extends Config
 		return true;
 	}
 
+	@ConfigItem(
+		keyName = "clientDisconnect",
+		name = "Client Disconnect",
+		description = "Play a sound when the game loses its connection to the server. Does not trigger for ordinary logout or world hopping.",
+		section = GENERAL_SECTION,
+		position = 16
+	)
+	default boolean clientDisconnect()
+	{
+		return true;
+	}
+
 	// =========================================================================
 	// Specs & Combat
 	// =========================================================================
@@ -718,7 +730,7 @@ public interface OdablockConfig extends Config
 	@ConfigItem(
 		keyName = "tfaWhiteChest",
 		name = "TFA White Chest",
-		description = "Should Odablock say something when your regular chest is revealed at The Fractured Archive?",
+		description = "Should Odablock say something as soon as your regular chest is identified at The Fractured Archive?",
 		section = TFA_SECTION,
 		position = 351
 	)
@@ -730,7 +742,7 @@ public interface OdablockConfig extends Config
 	@ConfigItem(
 		keyName = "tfaPurpleChest",
 		name = "TFA Purple Chest",
-		description = "Should Odablock say something when your purple chest is revealed at The Fractured Archive?",
+		description = "Should Odablock say something as soon as your purple chest is identified at The Fractured Archive?",
 		section = TFA_SECTION,
 		position = 352
 	)
@@ -742,7 +754,7 @@ public interface OdablockConfig extends Config
 	@ConfigItem(
 		keyName = "tfaPurpleChestOpens",
 		name = "Opening the Chest",
-		description = "When enabled, Odablock will say 'Please GAGECK' whenever someone in your party opens the purple chest at The Fractured Archive.",
+		description = "When enabled, Odablock will say 'Please GAGECK' when someone in your party starts opening the purple chest at The Fractured Archive.",
 		section = TFA_SECTION,
 		position = 353
 	)

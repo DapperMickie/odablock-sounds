@@ -39,7 +39,9 @@ public class PrayerDown
 
 	public void setLastLoginTick(int tick)
 	{
-    	lastLoginTick = tick;
+		lastLoginTick = tick;
+		previousPrayerValue = tick >= 0 ? client.getBoostedSkillLevel(Skill.PRAYER) : -1;
+		notifyPrayer = previousPrayerValue == 0;
 	}
 
 	public void onGameTick(GameTick event)

@@ -72,7 +72,7 @@ public class KillingRat extends TimedSoundBase
 			return false;
 		}
 
-		if (chatMessage.getName() != "")
+		if (!"".equals(chatMessage.getName()))
 		{
 			return false;
 		}

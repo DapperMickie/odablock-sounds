@@ -155,7 +155,7 @@ public final class SoundPools
 		names.put("dhblock", "DH Axe Block");
 		names.put("gettingpurple", "Purple Chest");
 		names.put("whitelight", "White Chest Light");
-		names.put("toachestopens", "TOA Chest Opens");
+		names.put("toachestopens", "Opening the Chest (TOA / TFA)");
 		names.put("pkchest", "PK Chest");
 		names.put("givebone", "Give Bone");
 		names.put("hairdresser", "Hairdresser");

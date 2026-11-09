@@ -47,7 +47,7 @@ public class KillingPlayer
 		String standardized = Text.standardize(chatMessage.getMessage());
 		// Player Kill message checks
 		if (config.playerKilling() &&
-			chatMessage.getName().equals(""))
+			"".equals(chatMessage.getName()))
 		{
 			if (standardized.contains("%"))
 			{
@@ -60,7 +60,7 @@ public class KillingPlayer
 				return true;
 			}
 
-			if (standardized.equalsIgnoreCase(local.getName() + " has won!"))
+			if (local != null && standardized.equalsIgnoreCase(local.getName() + " has won!"))
 			{
 				playSound(false);
 				return true;
@@ -78,9 +78,9 @@ public class KillingPlayer
 			return false;
 		}
 
-		for (Pattern pattern : patterns)
+		for (Pattern pattern : patterns == null ? new Pattern[0] : patterns)
 		{
-			if (pattern.matcher(message).matches())
+			if (pattern != null && pattern.matcher(message).matches())
 			{
 				return true;
 			}
@@ -99,7 +99,7 @@ public class KillingPlayer
 		{
 			lmsKills = val;
 
-			if (lmsKills > 0)
+			if (lmsKills > 0 && config.playerKilling())
 			{
 				playSound(true);
 			}

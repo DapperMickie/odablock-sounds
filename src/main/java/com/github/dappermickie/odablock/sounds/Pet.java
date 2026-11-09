@@ -57,7 +57,7 @@ public class Pet
 		}
 		String message = Text.standardize(chatMessage.getMessage());
 		// Make sure it's one of the pet messages and not sent by a user to troll
-		if ((message.equals(normalPetMessage) || message.equals(backpackPetMessage) || message.equals(wouldHavePetMessage)) &&
+		if ((message.equalsIgnoreCase(normalPetMessage) || message.equalsIgnoreCase(backpackPetMessage) || message.equalsIgnoreCase(wouldHavePetMessage)) &&
 			chatMessage.getType() == ChatMessageType.GAMEMESSAGE)
 		{
 			receivedPetTick = client.getTickCount();

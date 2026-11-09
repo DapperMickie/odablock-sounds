@@ -34,7 +34,7 @@ public class AcceptTrade
 		// Accepting a trade logic, only play sound when message is sent by game
 		if (config.acceptTrade() &&
 			Text.standardize(chatMessage.getMessage()).equals("accepted trade.") &&
-			chatMessage.getName() == "")
+			"".equals(chatMessage.getName()))
 		{
 			soundEngine.playClip(Sound.ACCEPTED_TRADE, executor);
 			return true;

@@ -4,6 +4,8 @@ import com.github.dappermickie.odablock.OdablockConfig;
 import com.github.dappermickie.odablock.Sound;
 import com.github.dappermickie.odablock.SoundEngine;
 import com.google.gson.Gson;
+import com.google.gson.JsonParseException;
+import net.runelite.api.GameState;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Objects;
@@ -33,6 +35,8 @@ public class NotificationManager {
 
 	private final Set<String> sentMessages = new HashSet<>();
 	private int lastChecked = -1;
+	private int generation;
+	private boolean active = true;
 	private boolean initialCheckComplete = false;
 	private String baselineMessage = null;
 
@@ -61,13 +65,14 @@ public class NotificationManager {
 	private ScheduledExecutorService executor;
 
 	public void resetStateForWorldHopOrLogin() {
+		generation++;
 		lastChecked = -1;
 		initialCheckComplete = false;
 		baselineMessage = null;
 	}
 
 	public void onGameTick(GameTick gameTick) {
-		if (!config.notifications()) {
+		if (!active || !config.notifications()) {
 			return;
 		}
 		handleTickReset();
@@ -76,7 +81,8 @@ public class NotificationManager {
 			|| currentTick < lastChecked
 			|| currentTick - lastChecked > 100)
 		{
-			executor.submit(this::sendRequest);
+			final int requestGeneration = generation;
+			executor.submit(() -> sendRequest(requestGeneration));
 			lastChecked = currentTick;
 		}
 	}
@@ -88,7 +94,7 @@ public class NotificationManager {
 		}
 	}
 
-	private void sendRequest() {
+	private void sendRequest(int requestGeneration) {
 		// Cache-bust so GitHub raw CDN serves fresh JSON soon after updates.
 		final String url = NOTIFICATIONS_URL + "?t=" + System.currentTimeMillis();
 		Request request = new Request.Builder()
@@ -102,26 +108,50 @@ public class NotificationManager {
 
 			String jsonResponse = response.body().string();
 			Notification notification = gson.fromJson(jsonResponse, Notification.class);
-			if (notification != null && notification.getMessage() != null && !notification.getMessage().isEmpty()) {
-				final String message = notification.getMessage();
-				if (!initialCheckComplete) {
-					baselineMessage = message;
-					initialCheckComplete = true;
-					return;
-				}
-				if (Objects.equals(message, baselineMessage) || sentMessages.contains(message)) {
-					return;
-				}
-				sentMessages.add(message);
-				sendMessage(notification);
-				if (config.notificationPlaySound()) {
-					soundEngine.playClip(Sound.ODAS_ALERT, executor);
-				}
-			} else {
-				initialCheckComplete = true;
-			}
-		} catch (IOException ignored) {
+			clientThread.invokeLater(() -> applyNotification(notification, requestGeneration));
 		}
+		catch (IOException | JsonParseException ignored)
+		{
+		}
+	}
+
+	private void applyNotification(Notification notification, int requestGeneration)
+	{
+		if (!active || generation != requestGeneration || !config.notifications()
+			|| client.getGameState() != GameState.LOGGED_IN)
+		{
+			return;
+		}
+		String message = notification == null ? null : notification.getMessage();
+		if (!initialCheckComplete)
+		{
+			baselineMessage = message;
+			initialCheckComplete = true;
+			return;
+		}
+		if (message == null || message.trim().isEmpty()
+			|| Objects.equals(message, baselineMessage) || sentMessages.contains(message))
+		{
+			return;
+		}
+		sentMessages.add(message);
+		sendMessage(notification);
+		if (config.notificationPlaySound())
+		{
+			soundEngine.playClip(Sound.ODAS_ALERT, executor);
+		}
+	}
+
+	public void startUp()
+	{
+		active = true;
+		resetStateForWorldHopOrLogin();
+	}
+
+	public void shutDown()
+	{
+		active = false;
+		generation++;
 	}
 
 	private void sendMessage(Notification notification) {

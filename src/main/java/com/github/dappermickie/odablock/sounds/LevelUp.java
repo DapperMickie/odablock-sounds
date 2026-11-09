@@ -91,12 +91,11 @@ public class LevelUp
 		final boolean justReached99 = levelBefore < Experience.MAX_REAL_LEVEL
 			&& levelAfter >= Experience.MAX_REAL_LEVEL;
 
-		if (justReached99 && config.announceLevel99())
+		final boolean justMaxed = totalLevelBefore >= 0
+			&& totalLevelBefore < MAX_TOTAL_LEVEL && totalLevelAfter >= MAX_TOTAL_LEVEL;
+		final boolean announceMaxTotalLevel = justReached99 && justMaxed && config.announceMaxTotalLevel();
+		if (justReached99 && (config.announceLevel99() || announceMaxTotalLevel))
 		{
-			final boolean justMaxed = totalLevelBefore >= 0
-				&& totalLevelBefore < MAX_TOTAL_LEVEL
-				&& totalLevelAfter >= MAX_TOTAL_LEVEL;
-			final boolean announceMaxTotalLevel = justMaxed && config.announceMaxTotalLevel();
 
 			if (config.showChatMessages())
 			{
@@ -110,7 +109,7 @@ public class LevelUp
 
 			if (announceMaxTotalLevel)
 			{
-				soundEngine.playClip(Sound.Big_Gamon, executor);
+				soundEngine.playClip(Sound.BIG_GAMON, executor);
 			}
 			else
 			{

@@ -22,6 +22,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collections;
+import java.util.Locale;
 import java.util.concurrent.ThreadLocalRandom;
 
 // Based on code/ideas from the VancedBarrows plugin
@@ -67,12 +69,13 @@ public class CustomBarrowsFaces {
 	@Inject
 	private CustomBarrowsFacesOverlay overlay;
 
-	private final List<BufferedImage> randomFaceImages = new ArrayList<>();
-	private BufferedImage dharokFaceImage = null;
+	private volatile List<BufferedImage> randomFaceImages = Collections.emptyList();
+	private volatile BufferedImage dharokFaceImage;
+	private Widget hiddenFaceWidget;
 	private int animationTick = -1;
 
 	public void reloadImages() {
-		randomFaceImages.clear();
+		randomFaceImages = Collections.emptyList();
 		dharokFaceImage = null;
 
 		File odafacesDir = new File(RuneLite.RUNELITE_DIR, "odablock-sounds" + File.separator + "odafaces");
@@ -81,7 +84,11 @@ public class CustomBarrowsFaces {
 		}
 
 		// Load torvseta_face.png
-		File torvsetaFile = new File(odafacesDir, "torvseta_face.png");
+		List<BufferedImage> loadedImages = new ArrayList<>();
+		File torvsetaFile = new File(odafacesDir, "torvesta_face.png");
+		if (!torvsetaFile.exists()) {
+			torvsetaFile = new File(odafacesDir, "torvseta_face.png");
+		}
 		if (torvsetaFile.exists()) {
 			try {
 				dharokFaceImage = ImageIO.read(torvsetaFile);
@@ -92,7 +99,7 @@ public class CustomBarrowsFaces {
 
 		// Load oda_face_x.png and custom_face_x.png
 		File[] imageFiles = odafacesDir.listFiles((dir, name) -> {
-			String lowerName = name.toLowerCase();
+			String lowerName = name.toLowerCase(Locale.ROOT);
 			return lowerName.startsWith("oda_face_") || lowerName.startsWith("custom_face_");
 		});
 
@@ -101,13 +108,14 @@ public class CustomBarrowsFaces {
 				try {
 					BufferedImage img = ImageIO.read(imageFile);
 					if (img != null) {
-						randomFaceImages.add(img);
+						loadedImages.add(img);
 					}
 				} catch (IOException e) {
 					log.error("Failed to load image: {}", imageFile.getName(), e);
 				}
 			}
 		}
+		randomFaceImages = Collections.unmodifiableList(loadedImages);
 	}
 
 	public void onGameTick() {
@@ -122,18 +130,18 @@ public class CustomBarrowsFaces {
 		if (!faceWidget.isHidden() && animationTick == -1) {
 			BarrowsBrothers brother = getBarrowsBrotherForCurrentLocation();
 			if (brother != null && isCustomFaceEnabledFor(brother)) {
-				// Hide the vanilla jumpscare widget
-				faceWidget.setHidden(true);
-
+				List<BufferedImage> images = randomFaceImages;
 				BufferedImage imgToRender = null;
 				if (brother == BarrowsBrothers.DHAROK) {
 					imgToRender = dharokFaceImage;
-				} else if (!randomFaceImages.isEmpty()) {
-					int idx = ThreadLocalRandom.current().nextInt(randomFaceImages.size());
-					imgToRender = randomFaceImages.get(idx);
+				} else if (!images.isEmpty()) {
+					int idx = ThreadLocalRandom.current().nextInt(images.size());
+					imgToRender = images.get(idx);
 				}
 
 				if (imgToRender != null) {
+					faceWidget.setHidden(true);
+					hiddenFaceWidget = faceWidget;
 					final boolean isFixedMode = !client.isResized();
 					final int imageSize = isFixedMode ? IMAGE_SIZE_FIXED : IMAGE_SIZE_RESIZABLE;
 
@@ -178,16 +186,20 @@ public class CustomBarrowsFaces {
 		}
 	}
 
-	public void shutDown() {
+	public void resetAnimation() {
 		overlay.setVisible(false);
-		randomFaceImages.clear();
-		dharokFaceImage = null;
-		animationTick = -1;
-
-		Widget faceWidget = client.getWidget(24, 1);
-		if (faceWidget != null) {
-			faceWidget.setHidden(false);
+		if (animationTick >= 0 && hiddenFaceWidget != null
+			&& hiddenFaceWidget == client.getWidget(24, 1)) {
+			hiddenFaceWidget.setHidden(false);
 		}
+		hiddenFaceWidget = null;
+		animationTick = -1;
+	}
+
+	public void shutDown() {
+		resetAnimation();
+		randomFaceImages = Collections.emptyList();
+		dharokFaceImage = null;
 	}
 
 	private boolean isCustomFaceEnabledFor(BarrowsBrothers brother) {

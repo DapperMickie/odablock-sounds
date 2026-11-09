@@ -6,6 +6,7 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -188,7 +189,7 @@ public class EmoteHandler
 	@Nullable
 	String updateMessage(final String message, final boolean isOverhead)
 	{
-		if (chatIconIds == null)
+		if (chatIconIds == null || message == null)
 		{
 			return null;
 		}
@@ -201,7 +202,7 @@ public class EmoteHandler
 		{
 			// Remove tags except for <lt> and <gt>
 			final String originalTrigger = Text.removeFormattingTags(messageWords[i]);
-			final String trigger = originalTrigger.toLowerCase();
+			final String trigger = originalTrigger.toLowerCase(Locale.ROOT);
 			final Emote emote = Emote.getEmoji(trigger);
 
 			if (emote == null)
@@ -221,7 +222,7 @@ public class EmoteHandler
 
 			if (shouldSkip)
 			{
-				break;
+				continue;
 			}
 
 			final int emoteId = isOverhead ? overheadIconIds[emote.ordinal()] : chatIconIds[emote.ordinal()];

@@ -5,6 +5,8 @@ import com.github.dappermickie.odablock.OdablockConfig;
 import com.github.dappermickie.odablock.RightClickAction;
 import com.github.dappermickie.odablock.sounds.LivestreamLiveSound;
 import com.google.gson.Gson;
+import com.google.gson.JsonParseException;
+import net.runelite.api.GameState;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
@@ -30,6 +32,8 @@ public class LivestreamManager
 {
 	private static final Duration LIVE_SOUND_MAX_AGE = Duration.ofMinutes(3);
 
+	private boolean active = true;
+	private int generation;
 	private Livestream livestream = null;
 	private int lastChecked = -1;
 	private int lastSentMessage = -1;
@@ -65,7 +69,7 @@ public class LivestreamManager
 
 	public void onGameTick(GameTick gameTick)
 	{
-		if (!config.livestream())
+		if (!active || !config.livestream())
 		{
 			return;
 		}
@@ -78,9 +82,8 @@ public class LivestreamManager
 			|| currentTick < lastChecked
 			|| currentTick - lastChecked > 100)
 		{
-			executor.submit(() -> {
-				sendRequest(currentTick);
-			});
+			final int requestGeneration = generation;
+			executor.submit(() -> sendRequest(requestGeneration));
 
 			lastChecked = currentTick;
 		}
@@ -88,6 +91,7 @@ public class LivestreamManager
 
 	public void resetStateForWorldHopOrLogin()
 	{
+		generation++;
 		// Reset poll/message timing so we immediately refresh after state transitions.
 		// Keep the last livestream snapshot so hop/login doesn't count as a live transition.
 		lastChecked = -1;
@@ -95,7 +99,7 @@ public class LivestreamManager
 		suppressLiveTransitionSound = true;
 	}
 
-	private void sendRequest(final int currentTick)
+	private void sendRequest(final int requestGeneration)
 	{
 		Request request = new Request.Builder()
 			.url("https://raw.githubusercontent.com/LogicalSoIutions/odablock-sounds-live/refs/heads/main/livestream.json")
@@ -115,47 +119,58 @@ public class LivestreamManager
 				return;
 			}
 
-			if (livestream != null &&
-				newLivestream.isLive() == livestream.isLive() &&
-				Objects.equals(newLivestream.getTitle(), livestream.getTitle()) &&
-				Objects.equals(newLivestream.getWentLiveAt(), livestream.getWentLiveAt()))
-			{
-				lastChecked = currentTick;
-				return;
-			}
-
-			final Livestream previousLivestream = livestream;
-			final boolean wasLive = previousLivestream != null && previousLivestream.isLive();
-			final boolean isLive = newLivestream.isLive();
-			final boolean becameOffline = previousLivestream != null && wasLive && !isLive;
-			final boolean wasSuppressingLiveSound = suppressLiveTransitionSound;
-			suppressLiveTransitionSound = false;
-
-			livestream = newLivestream;
-			clientThread.invokeLater(() -> {
-				if (isLive)
-				{
-					sendLiveLivestreamMessage(true);
-				}
-
-				if (shouldPlayLiveSound(previousLivestream, newLivestream, wasSuppressingLiveSound))
-				{
-					offlineAnnouncementSent = false;
-					livestreamLiveSound.playSound();
-				}
-				else if (becameOffline && !offlineAnnouncementSent)
-				{
-					sendOfflineLivestreamMessage();
-					offlineAnnouncementSent = true;
-				}
-			});
+			clientThread.invokeLater(() -> applySnapshot(newLivestream, requestGeneration));
 		}
-		catch (IOException e)
+		catch (IOException | JsonParseException ignored)
 		{
 		}
-		catch (Exception e)
+	}
+
+	private void applySnapshot(Livestream newLivestream, int requestGeneration)
+	{
+		if (!active || generation != requestGeneration || !config.livestream()
+			|| client.getGameState() != GameState.LOGGED_IN)
 		{
+			return;
 		}
+		boolean wasSuppressingLiveSound = suppressLiveTransitionSound;
+		suppressLiveTransitionSound = false;
+		if (livestream != null && newLivestream.isLive() == livestream.isLive()
+			&& Objects.equals(newLivestream.getTitle(), livestream.getTitle())
+			&& Objects.equals(newLivestream.getWentLiveAt(), livestream.getWentLiveAt()))
+		{
+			return;
+		}
+
+		Livestream previousLivestream = livestream;
+		boolean becameOffline = previousLivestream != null && previousLivestream.isLive() && !newLivestream.isLive();
+		livestream = newLivestream;
+		if (newLivestream.isLive())
+		{
+			offlineAnnouncementSent = false;
+			sendLiveLivestreamMessage(true);
+		}
+		if (shouldPlayLiveSound(previousLivestream, newLivestream, wasSuppressingLiveSound))
+		{
+			livestreamLiveSound.playSound();
+		}
+		else if (becameOffline && !offlineAnnouncementSent)
+		{
+			sendOfflineLivestreamMessage();
+			offlineAnnouncementSent = true;
+		}
+	}
+
+	public void startUp()
+	{
+		active = true;
+		resetStateForWorldHopOrLogin();
+	}
+
+	public void shutDown()
+	{
+		active = false;
+		generation++;
 	}
 
 	private void sendLiveLivestreamMessage(boolean force)
