@@ -21,36 +21,40 @@ import net.runelite.api.gameval.AnimationID;
 import net.runelite.api.gameval.NpcID;
 import net.runelite.api.gameval.SpotanimID;
 import net.runelite.api.gameval.VarbitID;
+import net.runelite.client.callback.ClientThread;
 
 @Singleton
 public class TfaChestLight
 {
 	// Loot room template region, also used by the TFA Plugin Hub plugin's RaidRoom.
 	private static final int LOOT_REGION = 16474;
-	private static final int STANDARD_CHEST_COUNT = 8;
 	private static final int OWN_CHEST_VARBIT = VarbitID.TFA_VAULT_OWN_CHEST;
 
 	private final Client client;
 	private final OdablockConfig config;
 	private final SoundEngine soundEngine;
 	private final ScheduledExecutorService executor;
+	private final ClientThread clientThread;
 
 	private boolean chestsHandled;
 	private boolean uniqueChestOpeningHandled;
+	private boolean purpleCheckPending;
+	private int roomGeneration;
 
 	@Inject
 	public TfaChestLight(Client client, OdablockConfig config, SoundEngine soundEngine,
-		ScheduledExecutorService executor)
+		ScheduledExecutorService executor, ClientThread clientThread)
 	{
 		this.client = client;
 		this.config = config;
 		this.soundEngine = soundEngine;
 		this.executor = executor;
+		this.clientThread = clientThread;
 	}
 
 	public void onGameTick(GameTick event)
 	{
-		updateChestState();
+		updateChestState(true);
 	}
 
 	public void onVarbitChanged(VarbitChanged event)
@@ -59,7 +63,7 @@ public class TfaChestLight
 		if (id == OWN_CHEST_VARBIT || (id >= VarbitID.TFA_VAULT_CHEST_0_STATE
 			&& id <= VarbitID.TFA_VAULT_CHEST_7_STATE))
 		{
-			updateChestState();
+			updateChestState(false);
 		}
 	}
 
@@ -68,7 +72,7 @@ public class TfaChestLight
 		NPC npc = event.getNpc();
 		if (npc != null && (isUniqueChest(npc) || isStandardChest(npc)))
 		{
-			updateChestState();
+			updateChestState(false);
 		}
 	}
 
@@ -93,7 +97,7 @@ public class TfaChestLight
 			&& WorldPoint.fromLocalInstance(client, player.getLocalLocation()).getRegionID() == LOOT_REGION;
 	}
 
-	private void updateChestState()
+	private void updateChestState(boolean allowPurple)
 	{
 		if (!isInLootRoom())
 		{
@@ -105,7 +109,7 @@ public class TfaChestLight
 		}
 
 		boolean ownChest = client.getVarbitValue(OWN_CHEST_VARBIT) > 0;
-		int standardChests = 0;
+		boolean uniqueRewardAvailable = false;
 		for (NPC npc : client.getNpcs())
 		{
 			// The eight standard chests transform according to ownership and opened state.
@@ -118,18 +122,19 @@ public class TfaChestLight
 			if (id >= NpcID.TFA_REWARDS_CHEST_VAULT_CLOSED_NOTMINE
 				&& id <= NpcID.TFA_REWARDS_CHEST_VAULT_OPEN_MINE)
 			{
-				standardChests++;
 				ownChest |= npc.hasSpotAnim(SpotanimID.VFX_TFA_SMALL_CHEST_SPARKLES);
 			}
 			switch (id)
 			{
 				case NpcID.TFA_UNIQUE_CHEST_VAULT_CLOSED:
+					uniqueRewardAvailable = true;
 					if (isOpeningAnimation(npc.getAnimation()))
 					{
 						playOpeningSound();
 					}
 					break;
 				case NpcID.TFA_UNIQUE_CHEST_VAULT_OPEN:
+					uniqueRewardAvailable = true;
 					break;
 				case NpcID.TFA_REWARDS_CHEST_VAULT_CLOSED_MINE:
 				case NpcID.TFA_REWARDS_CHEST_VAULT_OPEN_MINE:
@@ -143,12 +148,19 @@ public class TfaChestLight
 			return;
 		}
 
-		// White is known as soon as ownership/sparkles appear. Once all eight
-		// standard chests are loaded, their lack of ownership/sparkles means purple;
-		// do not wait for the unique chest or its reveal animation.
-		if (!ownChest && standardChests < STANDARD_CHEST_COUNT)
+		// Eight ordinary chests with no sparkles is also the initial room state.
+		// Only an allocated unique chest makes the absence of our own chest a purple.
+		if (!ownChest)
 		{
-			return;
+			if (!uniqueRewardAvailable)
+			{
+				return;
+			}
+			if (!allowPurple)
+			{
+				checkPurpleAtTickEnd();
+				return;
+			}
 		}
 
 		chestsHandled = true;
@@ -163,6 +175,25 @@ public class TfaChestLight
 		{
 			soundEngine.playClip(Sound.WHITE_LIGHT_AFTER_RAID, executor);
 		}
+	}
+
+	private void checkPurpleAtTickEnd()
+	{
+		if (purpleCheckPending)
+		{
+			return;
+		}
+		purpleCheckPending = true;
+		final int generation = roomGeneration;
+		clientThread.invokeAtTickEnd(() -> {
+			if (generation != roomGeneration)
+			{
+				return;
+			}
+			purpleCheckPending = false;
+			// Ownership and NPC updates may arrive in either order within one tick.
+			updateChestState(true);
+		});
 	}
 
 	private boolean isUniqueChest(NPC npc)
@@ -212,6 +243,8 @@ public class TfaChestLight
 
 	public void reset()
 	{
+		roomGeneration++;
+		purpleCheckPending = false;
 		chestsHandled = false;
 		uniqueChestOpeningHandled = false;
 	}
