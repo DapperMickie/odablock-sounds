@@ -1,7 +1,6 @@
 package com.github.dappermickie.odablock.sounds;
 
 import com.github.dappermickie.odablock.*;
-import com.github.dappermickie.odablock.overrides.SoundOverrideAction;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
@@ -55,7 +54,7 @@ public class RedemptionProc extends TimedSoundBase
 						//TODO: Add different chat message
 						client.addChatMessage(ChatMessageType.PUBLICCHAT, ODABLOCK, "Your redemption has procced.", null);
 					}
-					soundEngine.playClip(Sound.REDEMPTION_PROC, SoundOverrideAction.REDEMPTION_PROC, executor);
+					soundEngine.playClip(Sound.REDEMPTION_PROC, executor);
 					return;
 				}
 			}
@@ -68,7 +67,7 @@ public class RedemptionProc extends TimedSoundBase
 		int lastRedemptionProcTick = getLastPlayedTick();
 		if (redemptionHasProcced &&
 			lastRedemptionProcTick != currentTick &&
-			currentTick - lastRedemptionProcTick > getTickDelay())
+			(currentTick < lastRedemptionProcTick || currentTick - lastRedemptionProcTick > getTickDelay()))
 		{
 			setLastPlayedTickTick(-1);
 			redemptionHasProcced = false;

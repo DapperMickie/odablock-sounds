@@ -5,11 +5,10 @@ import com.github.dappermickie.odablock.DhAxeStyles;
 import com.github.dappermickie.odablock.OdablockConfig;
 import com.github.dappermickie.odablock.OdablockVarbitValues;
 import com.github.dappermickie.odablock.OdablockVarbits;
-import com.github.dappermickie.odablock.RandomSoundUtility;
 import com.github.dappermickie.odablock.Sound;
 import com.github.dappermickie.odablock.SoundEngine;
-import com.github.dappermickie.odablock.overrides.SoundOverrideAction;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -24,6 +23,7 @@ import net.runelite.api.ItemContainer;
 import net.runelite.api.ItemID;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.client.callback.ClientThread;
+import net.runelite.client.game.ItemVariationMapping;
 
 @Singleton
 @Slf4j
@@ -51,7 +51,7 @@ public class DhAxe extends TimedSoundBase
 	private int current46 = -1;
 	private int current843 = 0;
 	private DhAxeStyles dhAxeStyle;
-	private final int[] dhAxeIds = new int[]{ItemID.DHAROKS_GREATAXE, ItemID.DHAROKS_GREATAXE_100, ItemID.DHAROKS_GREATAXE_75, ItemID.DHAROKS_GREATAXE_50, ItemID.DHAROKS_GREATAXE_25, ItemID.SOULREAPER_AXE, ItemID.SOULREAPER_AXE_28338, ItemID.DHAROKS_GREATAXE_25516};
+	private static final Set<Integer> DH_AXE_BASE_IDS = Set.of(ItemID.DHAROKS_GREATAXE, ItemID.SOULREAPER_AXE);
 
 	DhAxe()
 	{
@@ -105,7 +105,7 @@ public class DhAxe extends TimedSoundBase
 		final int currentTick = client.getTickCount();
 		if (canPlaySound(currentTick))
 		{
-			soundEngine.playClip(sound, toOverrideAction(sound), executor);
+			soundEngine.playClip(sound, executor);
 
 			setLastPlayedTickTick(currentTick);
 		}
@@ -128,17 +128,9 @@ public class DhAxe extends TimedSoundBase
 		{
 			return false;
 		}
-		final int itemId = item.getId();
-
-		for (int id : dhAxeIds)
-		{
-			if (id == itemId)
-			{
-				return true;
-			}
-		}
-
-		return false;
+		// Variant mapping fix by @janezicmatej: https://github.com/DapperMickie/odablock-sounds/pull/97
+		final int baseItemId = ItemVariationMapping.map(item.getId());
+		return DH_AXE_BASE_IDS.contains(baseItemId);
 	}
 
 	private Sound getSoundForDhAxeStyle()
@@ -167,20 +159,4 @@ public class DhAxe extends TimedSoundBase
 		return sound;
 	}
 
-	private SoundOverrideAction toOverrideAction(Sound sound)
-	{
-		switch (sound)
-		{
-			case DH_AXE_CHOP:
-				return SoundOverrideAction.DH_AXE_CHOP;
-			case DH_AXE_HACK:
-				return SoundOverrideAction.DH_AXE_HACK;
-			case DH_AXE_SMASH:
-				return SoundOverrideAction.DH_AXE_SMASH;
-			case DH_AXE_BLOCK:
-				return SoundOverrideAction.DH_AXE_BLOCK;
-			default:
-				return null;
-		}
-	}
 }

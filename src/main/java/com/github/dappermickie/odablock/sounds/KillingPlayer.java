@@ -5,7 +5,6 @@ import com.github.dappermickie.odablock.OdablockConfig;
 import com.github.dappermickie.odablock.PlayerKillLineManager;
 import com.github.dappermickie.odablock.Sound;
 import com.github.dappermickie.odablock.SoundEngine;
-import com.github.dappermickie.odablock.overrides.SoundOverrideAction;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
@@ -16,7 +15,6 @@ import net.runelite.client.util.Text;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.Random;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.regex.Pattern;
 
@@ -49,24 +47,45 @@ public class KillingPlayer
 		String standardized = Text.standardize(chatMessage.getMessage());
 		// Player Kill message checks
 		if (config.playerKilling() &&
-			chatMessage.getName().equals(""))
+			"".equals(chatMessage.getName()))
 		{
-			Pattern[] patterns = PlayerKillLineManager.getPatterns();
-			for (Pattern pattern : patterns)
+			if (standardized.contains("%"))
 			{
-				if (pattern.matcher(standardized).matches())
-				{
-					playSound(true);
-					return true;
-				}
+				return false;
+			}
+			Pattern[] patterns = PlayerKillLineManager.getPatterns();
+			if (isPlayerKillMessage(standardized, patterns))
+			{
+				playSound(true);
+				return true;
 			}
 
-			if (standardized.equalsIgnoreCase(local.getName() + " has won!"))
+			if (local != null && standardized.equalsIgnoreCase(local.getName() + " has won!"))
 			{
 				playSound(false);
 				return true;
 			}
 		}
+		return false;
+	}
+
+	static boolean isPlayerKillMessage(String message, Pattern[] patterns)
+	{
+		// Loot broadcasts can start with a player's name, including names such as "Rip Arthur"
+		// that match the intentionally broad "rip.*" PvP kill pattern.
+		if (message.contains(" received a drop:"))
+		{
+			return false;
+		}
+
+		for (Pattern pattern : patterns == null ? new Pattern[0] : patterns)
+		{
+			if (pattern != null && pattern.matcher(message).matches())
+			{
+				return true;
+			}
+		}
+
 		return false;
 	}
 
@@ -80,7 +99,7 @@ public class KillingPlayer
 		{
 			lmsKills = val;
 
-			if (lmsKills > 0)
+			if (lmsKills > 0 && config.playerKilling())
 			{
 				playSound(true);
 			}
@@ -93,6 +112,6 @@ public class KillingPlayer
 		{
 			client.addChatMessage(ChatMessageType.PUBLICCHAT, ODABLOCK, message, null);
 		}
-		soundEngine.playClip(Sound.KILLING_SOMEONE_1, SoundOverrideAction.KILLING_PLAYER, executor);
+		soundEngine.playClip(Sound.KILLING_SOMEONE_1, executor);
 	}
 }
