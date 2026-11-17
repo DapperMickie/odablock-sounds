@@ -407,6 +407,11 @@ public class OdablockPlugin extends Plugin
 		{
 			return;
 		}
+		// CoX results arrive as friends-chat notifications, before the game-message filter.
+		else if (coxSounds.onChatMessage(chatMessage))
+		{
+			return;
+		}
 		else if (chatMessage.getType() != ChatMessageType.GAMEMESSAGE && chatMessage.getType() != ChatMessageType.SPAM)
 		{
 			return;
@@ -429,10 +434,6 @@ public class OdablockPlugin extends Plugin
 			return;
 		}
 		else if (killingPlayer.onChatMessage(chatMessage))
-		{
-			return;
-		}
-		else if (coxSounds.onChatMessage(chatMessage))
 		{
 			return;
 		}
