@@ -10,7 +10,7 @@ public enum SoundOverrideAction
 {
 	DEATH("death", "Death", Sound.DEATH),
 	LEVEL_UP("levelUp", "Level Up", Sound.LEVEL_UP),
-	LEVEL_99("level99", "Level 99", Sound.GAMON_GO_LIVE),
+	LEVEL_99("level99", "Level 99", Sound.LEVEL_99),
 	COLLECTION_LOG("collectionLog", "Collection Log", Sound.COLLECTION_LOG_SLOT),
 	QUEST_COMPLETED("questCompleted", "Quest Completed", Sound.QUEST),
 	COMBAT_ACHIEVEMENT("combatAchievement", "Combat Achievement", Sound.COMBAT_TASK),
@@ -48,7 +48,7 @@ public enum SoundOverrideAction
 	HAIRDRESSER("hairdresser", "Hairdresser", Sound.HAIRDRESSER_SOUND_1),
 	SNOWBALLED("snowballed", "Snowballed", Sound.SNOWBALL_1),
 	KILLING_RAT("killingRat", "Killing Rat/Scurrius", Sound.KILLING_RAT_OR_SCURRIUS_1),
-	LIVESTREAM_GO_LIVE("livestreamGoLive", "Livestream Go Live", Sound.GAMON_GO_LIVE);
+	LIVESTREAM_GO_LIVE("livestreamGoLive", "Livestream Go Live", Sound.LIVESTREAM_GO_LIVE);
 
 	private final String key;
 	private final String displayName;

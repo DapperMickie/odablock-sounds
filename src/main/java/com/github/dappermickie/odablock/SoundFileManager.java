@@ -139,6 +139,7 @@ public abstract class SoundFileManager
 			// End early if the sound couldn't be downloaded
 			if (hasNotDownloadedSound(sound, okHttpClient))
 			{
+				isUpdating = false;
 				return;
 			}
 		}
@@ -198,6 +199,11 @@ public abstract class SoundFileManager
 		ensureSoundDirectoryExists(soundDirectoryFile);
 		try (Response res = okHttpClient.newCall(new Request.Builder().url(soundUrl).build()).execute())
 		{
+			if (!res.isSuccessful())
+			{
+				log.warn("Odablock Plugin could not download {}: HTTP {}", soundUrl, res.code());
+				return true;
+			}
 			if (res.body() != null)
 			{
 				Files.copy(new BufferedInputStream(res.body().byteStream()), outputPath, StandardCopyOption.REPLACE_EXISTING);

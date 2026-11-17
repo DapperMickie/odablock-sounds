@@ -74,7 +74,7 @@ public class LevelUp
 			{
 				client.addChatMessage(ChatMessageType.PUBLICCHAT, ODABLOCK, level99Message, null);
 			}
-			soundEngine.playClip(Sound.GAMON_GO_LIVE, SoundOverrideAction.LEVEL_99, executor);
+			soundEngine.playClip(Sound.LEVEL_99, SoundOverrideAction.LEVEL_99, executor);
 			return;
 		}
 
