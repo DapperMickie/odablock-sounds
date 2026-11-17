@@ -1,7 +1,6 @@
 package com.github.dappermickie.odablock.sounds;
 
 import com.github.dappermickie.odablock.*;
-import com.github.dappermickie.odablock.overrides.SoundOverrideAction;
 import java.util.Random;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
@@ -55,7 +54,7 @@ public class DdsSpec extends TimedSoundBase
 						//TODO: Add different chat message
 						client.addChatMessage(ChatMessageType.PUBLICCHAT, ODABLOCK, message, null);
 					}
-					soundEngine.playClip(Sound.DDS_SPEC, SoundOverrideAction.DDS_SPEC, executor);
+					soundEngine.playClip(Sound.DDS_SPEC, executor);
 					setLastPlayedTickTick(currentTick);
 				}
 			}
@@ -74,7 +73,7 @@ public class DdsSpec extends TimedSoundBase
 				//TODO FIX for not you
 				if (!config.ownPlayerOnly() && canPlaySound(client.getTickCount()))
 				{
-					soundEngine.playClip(Sound.DDS_SPEC, SoundOverrideAction.DDS_SPEC, executor);
+					soundEngine.playClip(Sound.DDS_SPEC, executor);
 				}
 				return;
 			}

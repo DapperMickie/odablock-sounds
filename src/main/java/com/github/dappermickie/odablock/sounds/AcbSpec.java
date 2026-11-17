@@ -1,12 +1,9 @@
 package com.github.dappermickie.odablock.sounds;
 
 import com.github.dappermickie.odablock.OdablockConfig;
-import com.github.dappermickie.odablock.RandomSoundUtility;
 import com.github.dappermickie.odablock.Sound;
 import com.github.dappermickie.odablock.SoundEngine;
 import com.github.dappermickie.odablock.SoundIds;
-import com.github.dappermickie.odablock.overrides.SoundOverrideAction;
-import java.util.Random;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
@@ -46,7 +43,7 @@ public class AcbSpec
 			if (soundId == SoundIds.ACB_SPEC.Id)
 			{
 				event.consume();
-				soundEngine.playClip(Sound.ACB_SPEC, SoundOverrideAction.ACB_SPEC, executor);
+				soundEngine.playClip(Sound.ACB_SPEC, executor);
 				if (config.showChatMessages())
 				{
 					client.addChatMessage(ChatMessageType.PUBLICCHAT, ODABLOCK, message, null);
@@ -66,7 +63,7 @@ public class AcbSpec
 			if (soundId == SoundIds.ACB_SPEC.Id)
 			{
 				event.consume();
-				soundEngine.playClip(Sound.ACB_SPEC, SoundOverrideAction.ACB_SPEC, executor);
+				soundEngine.playClip(Sound.ACB_SPEC, executor);
 				if (config.showChatMessages())
 				{
 					client.addChatMessage(ChatMessageType.PUBLICCHAT, ODABLOCK, message, null);

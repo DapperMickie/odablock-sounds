@@ -6,6 +6,7 @@ import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -41,24 +42,51 @@ public class EmoteHandler
 	@Inject
 	private OdablockConfig config;
 
-	private int[] iconIds;
+	private int[] chatIconIds;
+	private int[] overheadIconIds;
+
+	@Inject private EmoteCatalog catalog;
+	@Inject private java.util.concurrent.ScheduledExecutorService executor;
+	private java.util.concurrent.Future<?> refreshTask;
+	private long generation;
 
 	public void loadEmotes()
 	{
-		if (iconIds != null)
-		{
-			return;
-		}
-
-		Emote[] emotes = Emote.values();
-		iconIds = new int[emotes.length];
+		catalog.reset();
+		long active = ++generation;
+		refreshTask = executor.submit(() -> {
+			try
+			{
+				Emote[] emotes = catalog.refresh();
+				if (emotes != null) clientThread.invoke(() -> {
+					if (generation != active) return;
+					install(emotes);
+				});
+			}
+			catch (Exception e) { log.warn("Could not refresh emotes", e); }
+		});
+	}
+	public void shutDown()
+	{
+		++generation;
+		if (refreshTask != null) refreshTask.cancel(false);
+	}
+	private void install(Emote[] emotes)
+	{
+		final int[] loadedChatIconIds = new int[emotes.length];
+		final int[] loadedOverheadIconIds = new int[emotes.length];
 
 		for (int i = 0; i < emotes.length; i++)
 		{
 			final Emote emoji = emotes[i];
-			final BufferedImage image = emoji.loadImage();
-			iconIds[i] = chatIconManager.registerChatIcon(image);
+			final BufferedImage chatImage = emoji.loadImage();
+			final BufferedImage overheadImage = emoji.loadOverheadImage();
+			loadedChatIconIds[i] = chatIconManager.registerChatIcon(chatImage);
+			loadedOverheadIconIds[i] = chatIconManager.registerChatIcon(overheadImage);
 		}
+		overheadIconIds = loadedOverheadIconIds;
+		chatIconIds = loadedChatIconIds;
+		Emote.install(emotes);
 	}
 
 	public void onChatMessage(ChatMessage chatMessage)
@@ -68,7 +96,7 @@ public class EmoteHandler
 			return;
 		}
 
-		if (iconIds == null)
+		if (chatIconIds == null)
 		{
 			return;
 		}
@@ -91,7 +119,7 @@ public class EmoteHandler
 
 		final MessageNode messageNode = chatMessage.getMessageNode();
 		final String message = messageNode.getValue();
-		final String updatedMessage = updateMessage(message);
+		final String updatedMessage = updateMessage(message, false);
 
 		if (updatedMessage == null)
 		{
@@ -114,7 +142,7 @@ public class EmoteHandler
 		}
 
 		final String message = event.getOverheadText();
-		final String updatedMessage = updateMessage(message);
+		final String updatedMessage = updateMessage(message, true);
 
 		if (updatedMessage == null)
 		{
@@ -137,7 +165,7 @@ public class EmoteHandler
 		client.addChatMessage(ChatMessageType.GAMEMESSAGE, ODABLOCK, "Odablock emote list:", null);
 		for (Emote emote : Emote.values())
 		{
-			final int emoteId = iconIds[emote.ordinal()];
+			final int emoteId = chatIconIds[emote.ordinal()];
 			final String emoteImage = "<img=" + chatIconManager.chatIconIndex(emoteId) + ">";
 			StringBuilder chatMessageSb = new StringBuilder();
 			chatMessageSb.append(emote.getTrigger());
@@ -180,8 +208,13 @@ public class EmoteHandler
 	}
 
 	@Nullable
-	String updateMessage(final String message)
+	String updateMessage(final String message, final boolean isOverhead)
 	{
+		if (chatIconIds == null || message == null)
+		{
+			return null;
+		}
+
 		final String[] messageWords = WHITESPACE_REGEXP.split(message);
 		final String[] ignoredEmotes = config.emoteIgnoreList().split(",");
 
@@ -190,7 +223,7 @@ public class EmoteHandler
 		{
 			// Remove tags except for <lt> and <gt>
 			final String originalTrigger = Text.removeFormattingTags(messageWords[i]);
-			final String trigger = originalTrigger.toLowerCase();
+			final String trigger = originalTrigger.toLowerCase(Locale.ROOT);
 			final Emote emote = Emote.getEmoji(trigger);
 
 			if (emote == null)
@@ -210,10 +243,10 @@ public class EmoteHandler
 
 			if (shouldSkip)
 			{
-				break;
+				continue;
 			}
 
-			final int emoteId = iconIds[emote.ordinal()];
+			final int emoteId = isOverhead ? overheadIconIds[emote.ordinal()] : chatIconIds[emote.ordinal()];
 			messageWords[i] = messageWords[i].replace(originalTrigger, "<img=" + chatIconManager.chatIconIndex(emoteId) + ">");
 			editedMessage = true;
 		}

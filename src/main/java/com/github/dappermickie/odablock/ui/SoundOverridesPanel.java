@@ -1,7 +1,6 @@
 package com.github.dappermickie.odablock.ui;
 
 import com.github.dappermickie.odablock.SoundEngine;
-import com.github.dappermickie.odablock.overrides.SoundOverrideAction;
 import com.github.dappermickie.odablock.overrides.SoundOverrideService;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
@@ -66,7 +65,10 @@ public class SoundOverridesPanel extends PluginPanel
 	@Override
 	public void onActivate()
 	{
-		SwingUtilities.invokeLater(listView::refresh);
+		SwingUtilities.invokeLater(() -> {
+			soundOverrideService.sanitizePersistedOverrides(true);
+			listView.refresh();
+		});
 	}
 
 	private void showList()
@@ -81,9 +83,9 @@ public class SoundOverridesPanel extends PluginPanel
 		cardLayout.show(this, CARD_ACTION_PICKER);
 	}
 
-	private void showSoundPicker(SoundOverrideAction action)
+	private void showSoundPicker(String poolDirectory)
 	{
-		soundPickerView.loadAction(action);
+		soundPickerView.loadPool(poolDirectory);
 		cardLayout.show(this, CARD_SOUND_PICKER);
 	}
 }

@@ -8,7 +8,7 @@ public abstract class TimedSoundBase
 	}
 
 	private final int tickDelay;
-	private int lastPlayedTick;
+	private int lastPlayedTick = -1;
 
 	void setLastPlayedTickTick(int tick)
 	{
@@ -17,7 +17,7 @@ public abstract class TimedSoundBase
 
 	boolean canPlaySound(int currentTick)
 	{
-		return currentTick - lastPlayedTick > tickDelay || lastPlayedTick == -1;
+		return lastPlayedTick == -1 || currentTick < lastPlayedTick || currentTick - lastPlayedTick > tickDelay;
 	}
 
 	int getLastPlayedTick()
