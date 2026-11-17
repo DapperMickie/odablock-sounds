@@ -736,12 +736,13 @@ public class OdablockPlugin extends Plugin
 		// UI sounds have no actor; boss sounds intentionally originate from an NPC.
 		enteringBankPin.onSoundEffectPlayed(event);
 		zebakRoar.onSoundEffectPlayed(event);
+		// Ruby procs arrive as non-positional sounds with no actor attached.
+		rubyBoltProc.onSoundEffectPlayed(event);
 
 		if (!shouldHandlePlayerSound(event.getSource()))
 		{
 			return;
 		}
-		rubyBoltProc.onSoundEffectPlayed(event);
 		redemptionProc.onSoundPlayed(event);
 		agsSpec.onSoundEffectPlayed(event);
 		ddsSpec.onSoundEffectPlayed(event);

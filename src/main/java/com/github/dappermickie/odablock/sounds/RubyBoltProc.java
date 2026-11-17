@@ -32,17 +32,19 @@ public class RubyBoltProc
 
 	public void onSoundEffectPlayed(SoundEffectPlayed event)
 	{
-		int soundId = event.getSoundId();
-		final Player local = client.getLocalPlayer();
-
-		if (config.rubyBoltProc())
+		if (!config.rubyBoltProc() || event.getSoundId() != SoundIds.RUBY_BOLT_PROC.Id)
 		{
-			if (soundId == SoundIds.RUBY_BOLT_PROC.Id)
-			{
-				event.consume();
-				soundEngine.playClip(Sound.RUBY_PROC, executor);
-				return;
-			}
+			return;
 		}
+
+		final Player local = client.getLocalPlayer();
+		if (local == null || (config.ownPlayerOnly()
+			&& event.getSource() != null && event.getSource() != local))
+		{
+			return;
+		}
+
+		event.consume();
+		soundEngine.playClip(Sound.RUBY_PROC, executor);
 	}
 }
