@@ -18,6 +18,6 @@ public class LivestreamLiveSound
 
 	public void playSound()
 	{
-		soundEngine.playClip(Sound.GAMON_GO_LIVE, SoundOverrideAction.LIVESTREAM_GO_LIVE, executor);
+		soundEngine.playClip(Sound.LIVESTREAM_GO_LIVE, SoundOverrideAction.LIVESTREAM_GO_LIVE, executor);
 	}
 }

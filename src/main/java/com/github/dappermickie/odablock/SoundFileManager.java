@@ -37,7 +37,7 @@ public abstract class SoundFileManager
 	private static final String DELETE_WARNING_FILENAME = "EXTRA_FILES_WILL_BE_DELETED_BUT_FOLDERS_WILL_REMAIN";
 	private static final String SOUNDVERSION_FILENAME = "SOUNDVERSION";
 	private static final File DELETE_WARNING_FILE = new File(DOWNLOAD_DIR, DELETE_WARNING_FILENAME);
-	private static final HttpUrl RAW_GITHUB = HttpUrl.parse("https://raw.githubusercontent.com/dappermickie/odablock-sounds/sounds-v2");
+	private static final HttpUrl RAW_GITHUB = HttpUrl.parse("https://raw.githubusercontent.com/dappermickie/odablock-sounds/sounds-v3");
 
 	private static boolean isUpdating = false;
 
@@ -139,6 +139,7 @@ public abstract class SoundFileManager
 			// End early if the sound couldn't be downloaded
 			if (hasNotDownloadedSound(sound, okHttpClient))
 			{
+				isUpdating = false;
 				return;
 			}
 		}
@@ -198,6 +199,11 @@ public abstract class SoundFileManager
 		ensureSoundDirectoryExists(soundDirectoryFile);
 		try (Response res = okHttpClient.newCall(new Request.Builder().url(soundUrl).build()).execute())
 		{
+			if (!res.isSuccessful())
+			{
+				log.warn("Odablock Plugin could not download {}: HTTP {}", soundUrl, res.code());
+				return true;
+			}
 			if (res.body() != null)
 			{
 				Files.copy(new BufferedInputStream(res.body().byteStream()), outputPath, StandardCopyOption.REPLACE_EXISTING);

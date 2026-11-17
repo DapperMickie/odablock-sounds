@@ -10,3 +10,5 @@ nbproject/
 src/main/resources/easter_egg_notes.txt
 bin/
 gradle/wrapper/
+runelite/
+missing_sounds.txt

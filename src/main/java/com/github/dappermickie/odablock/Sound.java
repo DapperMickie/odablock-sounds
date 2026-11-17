@@ -29,9 +29,6 @@ public enum Sound
 	//HIT_BY_KEPHRI("holykephri", "HitByKephri.wav"),//#14
 
 	COMBAT_TASK("combattask", "CombatTaskCompleted_r1.wav"),//#15
-	COMBAT_TASK_2("combattask", "CombatTaskCompleted_r2.wav"),//#15
-	COMBAT_TASK_3("combattask", "CombatTaskCompleted_r3.wav"),//#15
-	COMBAT_TASK_4("combattask", "CombatTaskCompleted_r4.wav"),//#15
 
 	DDS_SPEC("ddsspec", "DdsSpec_r1.wav"),//#16
 	DDS_SPEC_2("ddsspec", "DdsSpec_r2.wav"),//#16
@@ -81,7 +78,8 @@ public enum Sound
 	ACHIEVEMENT_DIARY("achievementdiary", "AchievementDiary_r1.wav"),
 	ACHIEVEMENT_DIARY_2("achievementdiary", "AchievementDiary_r2.wav"),
 	EASTER_EGG_STRAYDOG_BONE("givebone", "GiveBone.wav"),
-	GAMON_GO_LIVE("golive", "gamon_go_live.wav"),
+	LEVEL_99("biggamon", "Big_Gamon.wav"),
+	LIVESTREAM_GO_LIVE("livestream", "Livestream.wav"),
 	HAIRDRESSER_SOUND_1("hairdresser", "Hairdresser_r1.wav"),
 	HAIRDRESSER_SOUND_2("hairdresser", "Hairdresser_r2.wav"),
 	HAIRDRESSER_SOUND_3("hairdresser", "Hairdresser_r3.wav"),
